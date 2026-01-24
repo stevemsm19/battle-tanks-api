@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/BattleTanks.Application/BattleTanks.Application.csproj" />
+    <Project Path="src/BattleTanks.Domain/BattleTanks.Domain.csproj" />
+    <Project Path="src/BattleTanks.Infrastructure/BattleTanks.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/BattleTanks.Api/">
+    <Project Path="src/BattleTanks.Api/BattleTanks.Api/BattleTanks.Api.csproj" />
+  </Folder>
+</Solution>
