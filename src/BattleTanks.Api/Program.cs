@@ -7,6 +7,10 @@ using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Infrastructure.Persistence;
 using BattleTanks.Infrastructure.Persistence.Repositories.Auth;
 using BattleTanks.Infrastructure.Persistence.Repositories.Users;
+using BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
+using BattleTanks.Domain.Interfaces.Rooms;
+using BattleTanks.Application.Interfaces.Rooms;
+using BattleTanks.Application.Services.Rooms;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +33,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserManagementService, UserService>();
+
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
 builder.Services.AddControllers();

@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BattleTanks.Application\BattleTanks.Application.csproj" />
-    <ProjectReference Include="..\..\BattleTanks.Infrastructure\BattleTanks.Infrastructure.csproj" />
+    <ProjectReference Include="..\BattleTanks.Application\BattleTanks.Application.csproj" />
+    <ProjectReference Include="..\BattleTanks.Infrastructure\BattleTanks.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

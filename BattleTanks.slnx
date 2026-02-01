@@ -5,6 +5,6 @@
     <Project Path="src/BattleTanks.Infrastructure/BattleTanks.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/BattleTanks.Api/">
-    <Project Path="src/BattleTanks.Api/BattleTanks.Api/BattleTanks.Api.csproj" />
+    <Project Path="src/BattleTanks.Api/BattleTanks.Api.csproj" />
   </Folder>
 </Solution>
