@@ -26,6 +26,9 @@ FirebaseApp.Create(new AppOptions
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<BattleTanksDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.Configure<RouteOptions>(options =>
+    options.LowercaseUrls = true);
 builder.Services.AddScoped<IAuthRepository, FirebaseAuthRepository>();
 builder.Services.AddScoped<IUsersRepository, FirebaseUsersRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
