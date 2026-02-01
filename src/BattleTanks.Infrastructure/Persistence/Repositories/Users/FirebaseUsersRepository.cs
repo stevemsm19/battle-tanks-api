@@ -6,25 +6,18 @@ namespace BattleTanks.Infrastructure.Persistence.Repositories.Users;
 
 public class FirebaseUsersRepository : IUsersRepository
 {
-    public async Task<UserFirebaseInfo> GetUserAsync(string uid)
-    {
-        var userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(uid);
-        
-        return new UserFirebaseInfo
-        {
-            Uid = userRecord.Uid,
-            Email = userRecord.Email,
-            DisplayName = userRecord.DisplayName
-        };
-    }
-
-    public async Task UpdateUserAsync(string uid, string displayName)
+    public async Task UpdateUserAsync(string uid, string displayName, string email)
     {
         var args = new UserRecordArgs
         {
             Uid = uid,
-            DisplayName = displayName
         };
+
+        if (!string.IsNullOrWhiteSpace(displayName)) 
+            args.DisplayName = displayName;
+
+        if (!string.IsNullOrWhiteSpace(email)) 
+            args.Email = email;
 
         await FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
     }

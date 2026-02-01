@@ -19,8 +19,4 @@ public class FirebaseAuthRepository : IAuthRepository
         return userRecord.Uid;
     }
 
-    public async Task RevokeRefreshTokensAsync(string uid)
-    {
-        await FirebaseAuth.DefaultInstance.RevokeRefreshTokensAsync(uid);
     }
-}

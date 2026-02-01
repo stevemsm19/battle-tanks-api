@@ -32,13 +32,9 @@ public class AuthService : IAuthService
 
         return new RegisterResponseDTO 
         { 
+
             Uid = uid, 
             Message = "User registered successfully." 
         };
-    }
-
-    public async Task LogoutAsync(LogoutRequestDTO request)
-    {
-        await _authRepository.RevokeRefreshTokensAsync(request.Uid);
     }
 }
