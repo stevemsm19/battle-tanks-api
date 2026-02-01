@@ -30,6 +30,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(256);
         
+        builder.HasMany(u => u.RoomUsers)
+            .WithOne(ru => ru.User)
+            .HasForeignKey(ru => ru.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
         builder.Property(u => u.CreatedAt)
             .IsRequired();
         
