@@ -25,3 +25,4 @@ secrets.json
 
 # Environment
 .env
+firebase-service-account.json
