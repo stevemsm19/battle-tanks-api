@@ -27,6 +27,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<BattleTanksDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontendApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
+
 builder.Services.Configure<RouteOptions>(options =>
     options.LowercaseUrls = true);
 builder.Services.AddScoped<IAuthRepository, FirebaseAuthRepository>();
@@ -51,6 +62,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowFrontendApp");
 
 app.UseHttpsRedirection();
 
