@@ -34,7 +34,7 @@ public class RoomController : ControllerBase
 
         var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
         if (string.IsNullOrEmpty(firebaseUid))
-            return Unauthorized(new { message = "User ID not found in token." });
+            return NotFound(new { message = "User not found." });
 
         var room = await _roomService.CreateRoomAsync(createRoomDto, firebaseUid);
         return CreatedAtAction(nameof(GetAllRooms), new { id = room.Id }, room);
@@ -47,7 +47,7 @@ public class RoomController : ControllerBase
         var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
         
         if (string.IsNullOrEmpty(firebaseUid))
-            return Unauthorized(new { message = "User not found." });
+            return NotFound(new { message = "User not found." });
 
         try
         {

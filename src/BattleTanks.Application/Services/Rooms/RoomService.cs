@@ -3,7 +3,9 @@ using BattleTanks.Application.Interfaces.Rooms;
 using BattleTanks.Domain.Entities.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
 using BattleTanks.Domain.Interfaces.Users;
+using BattleTanks.Domain.Enums;
 
+// TODO: Exception Handling
 namespace BattleTanks.Application.Services.Rooms;
 
 public class RoomService : IRoomService
@@ -55,8 +57,8 @@ public class RoomService : IRoomService
         if (room == null)
             throw new Exception("Room not found");
 
-        if (!room.IsOpen)
-            throw new Exception("Room is closed");
+        if (room.Status != RoomStatus.Open)
+            throw new Exception("Room is closed or cancelled");
 
         var user = await _userRepository.GetByFirebaseUidAsync(firebaseUid);
         if (user == null)

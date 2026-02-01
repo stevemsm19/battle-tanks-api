@@ -8,7 +8,7 @@ public class RoomDTO
     public string Name { get; set; } = string.Empty;
     public int MaxPlayers { get; set; }
     public int CurrentPlayers { get; set; }
-    public bool IsOpen { get; set; }
+    public string Status { get; set; } = string.Empty;
     
     public static RoomDTO FromEntity(Room room)
     {
@@ -18,7 +18,7 @@ public class RoomDTO
             Name = room.Name,
             MaxPlayers = room.MaxPlayers,
             CurrentPlayers = room.RoomUsers.Count,
-            IsOpen = room.IsOpen
+            Status = room.Status.ToString()
         };
     }
 }
