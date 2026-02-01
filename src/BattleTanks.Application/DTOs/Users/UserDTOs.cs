@@ -3,6 +3,7 @@ namespace BattleTanks.Application.DTOs.Users;
 public class UpdateUserRequestDTO
 {
     public string DisplayName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
 }
 
 public class UserResponseDTO

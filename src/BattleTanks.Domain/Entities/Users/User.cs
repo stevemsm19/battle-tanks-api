@@ -1,5 +1,7 @@
 namespace BattleTanks.Domain.Entities.Users;
 
+using BattleTanks.Domain.Entities.Rooms;
+
 public class User
 {
     public Guid Id { get; set; }
@@ -8,4 +10,5 @@ public class User
     public string DisplayName {get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public ICollection<RoomUser> RoomUsers { get; set; } = new List<RoomUser>();
 }

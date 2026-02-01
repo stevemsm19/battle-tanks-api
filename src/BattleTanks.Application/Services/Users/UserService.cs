@@ -18,12 +18,6 @@ public class UserService : IUserService, IUserManagementService
 
     public async Task<UserCreatedDto> CreateUserInDatabaseAsync(string firebaseUid, string email, string displayName)
     {
-        var existingUser = await _userRepository.GetByFirebaseUidAsync(firebaseUid);
-        if (existingUser != null)
-        {
-            throw new Exception("User already exists");
-        }
-
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -81,9 +75,18 @@ public class UserService : IUserService, IUserManagementService
             throw new UnauthorizedAccessException("You can only update your own profile");
         }
 
-        await _firebaseRepository.UpdateUserAsync(firebaseUid, request.DisplayName);
+        await _firebaseRepository.UpdateUserAsync(firebaseUid, request.DisplayName, request.Email);
 
-        user.DisplayName = request.DisplayName;
+        if (!string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            user.DisplayName = request.DisplayName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            user.Email = request.Email;
+        }
+
         user.UpdatedAt = DateTime.UtcNow;
 
         _userRepository.Update(user);
