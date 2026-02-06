@@ -25,6 +25,17 @@ public class RoomController : ControllerBase
         return Ok(rooms);
     }
 
+    [HttpGet("{id}")]
+    [Authorize]
+    public async Task<ActionResult<RoomDetailDTO>> GetRoomById(Guid id)
+    {
+        var room = await _roomService.GetRoomByIdAsync(id);
+        if (room == null)
+            return NotFound(new { message = "Room not found." });
+            
+        return Ok(room);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<RoomDTO>> CreateRoom([FromBody] CreateRoomDTO createRoomDto)

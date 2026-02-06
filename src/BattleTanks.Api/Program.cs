@@ -55,6 +55,8 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IGameNotificationService, GameNotificationService>();
 
