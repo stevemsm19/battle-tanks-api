@@ -49,14 +49,7 @@ public class RoomController : ControllerBase
         if (string.IsNullOrEmpty(firebaseUid))
             return NotFound(new { message = "User not found." });
 
-        try
-        {
-            await _roomService.JoinRoomAsync(id, firebaseUid);
-            return Ok(new { message = "Joined room successfully" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        await _roomService.JoinRoomAsync(id, firebaseUid);
+        return Ok(new { message = "Joined room successfully" });
     }
 }

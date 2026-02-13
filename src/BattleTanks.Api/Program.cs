@@ -1,3 +1,4 @@
+using BattleTanks.Api.Middlewares;
 using BattleTanks.Api.Extensions;
 using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Services.Auth;
@@ -50,6 +51,8 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
@@ -60,6 +63,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 app.UseCors("AllowFrontendApp");
 

@@ -1,8 +1,10 @@
 using BattleTanks.Application.DTOs.Auth;
+using BattleTanks.Application.Exceptions;
 using BattleTanks.Application.Interfaces;
 using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Domain.Entities.Users;
+using BattleTanks.Domain.Exceptions;
 
 namespace BattleTanks.Application.Services.Auth;
 
@@ -19,11 +21,23 @@ public class AuthService : IAuthService
 
     public async Task<RegisterResponseDTO> RegisterAsync(RegisterRequestDTO request)
     {
-        var uid = await _identityProvider.CreateUserAsync(
-            request.Email, 
-            request.Password, 
-            request.Nickname
-        );
+        string uid;
+
+        try
+        {
+            uid = await _identityProvider.CreateUserAsync(
+                request.Email, 
+                request.Password, 
+                request.Nickname
+            );
+        }
+        catch (IdentityException ex)
+        {
+            if (ex.Code == "EmailAlreadyExists")
+                throw new BadRequestException("Email already registered.");
+
+            throw new ExternalServiceException("Identity service failed.");
+        }
 
         try
         {
@@ -53,3 +67,4 @@ public class AuthService : IAuthService
         };
     }
 }
+

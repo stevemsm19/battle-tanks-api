@@ -1,3 +1,4 @@
+using BattleTanks.Api.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,6 +22,30 @@ public static class AuthenticationExtensions
                     ValidAudience = projectId,
                     ValidateLifetime = true
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+
+                        var detail = context.Error switch
+                        {
+                            "invalid_token" when context.ErrorDescription?.Contains("expired") == true
+                                => "The token has expired.",
+                            "invalid_token"
+                                => "The token is invalid.",
+                            _
+                                => "Authentication is required to access this resource."
+                        };
+
+                        await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, 401, "Authentication error", detail);
+                    },
+                    OnForbidden = async context =>
+                    {
+                        await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, 403, "Access denied", "You do not have permission to access this resource.");
+                    }
+                };
             });
 
         services.AddAuthorization();
@@ -28,3 +53,5 @@ public static class AuthenticationExtensions
         return services;
     }
 }
+
+
