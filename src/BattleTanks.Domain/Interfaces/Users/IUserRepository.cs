@@ -6,6 +6,7 @@ public interface IUserRepository
 {
     Task<User?> GetByFirebaseUidAsync(string firebaseUid);
     Task<User?> GetByIdAsync(Guid id);
+    Task<bool> ExistsByNicknameAsync(string nickname);
     Task AddAsync(User user);
     void Update(User user);
     void Delete(User user);

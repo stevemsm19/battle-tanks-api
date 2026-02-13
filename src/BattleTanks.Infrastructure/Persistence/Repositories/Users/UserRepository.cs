@@ -24,6 +24,11 @@ public class UserRepository : IUserRepository
         return await _dbContext.Users.FindAsync(id);
     }
 
+    public async Task<bool> ExistsByNicknameAsync(string nickname)
+    {
+        return await _dbContext.Users.AnyAsync(u => u.Nickname.ToLower() == nickname.ToLower());
+    }
+
     public async Task AddAsync(User user)
     {
         await _dbContext.Users.AddAsync(user);

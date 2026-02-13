@@ -21,6 +21,10 @@ public class AuthService : IAuthService
 
     public async Task<RegisterResponseDTO> RegisterAsync(RegisterRequestDTO request)
     {
+        var nicknameExists = await _userRepository.ExistsByNicknameAsync(request.Nickname);
+        if (nicknameExists)
+            throw new BadRequestException("Nickname is already taken.");
+
         string uid;
 
         try

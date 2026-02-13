@@ -9,15 +9,15 @@ public static class ErrorResponseHelper
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static async Task WriteErrorResponseAsync(HttpResponse response, int statusCode, string title, string detail)
+    public static async Task WriteErrorResponseAsync(HttpResponse response, int statusCode, string message, string detail)
     {
         response.StatusCode = statusCode;
         response.ContentType = "application/json";
 
         var body = new
         {
-            title,
-            status = statusCode,
+            code = statusCode,
+            message,
             detail
         };
 
