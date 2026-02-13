@@ -2,10 +2,10 @@ using BattleTanks.Api.Extensions;
 using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Services.Auth;
 using BattleTanks.Application.Services.Users;
-using BattleTanks.Domain.Interfaces.Auth;
+using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Infrastructure.Persistence;
-using BattleTanks.Infrastructure.Persistence.Repositories.Auth;
+using BattleTanks.Infrastructure.Persistence.Repositories;
 using BattleTanks.Infrastructure.Persistence.Repositories.Users;
 using BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
@@ -40,13 +40,11 @@ builder.Services.AddCors(options =>
 
 builder.Services.Configure<RouteOptions>(options =>
     options.LowercaseUrls = true);
-builder.Services.AddScoped<IAuthRepository, FirebaseAuthRepository>();
-builder.Services.AddScoped<IUsersRepository, FirebaseUsersRepository>();
+builder.Services.AddScoped<IIdentityProvider, FirebaseIdentityRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserManagementService, UserService>();
 
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();

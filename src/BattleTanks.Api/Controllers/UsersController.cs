@@ -17,13 +17,14 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("{firebaseUid}")]
+    [HttpGet]
     [Authorize]
-    public async Task<ActionResult<UserResponseDTO>> GetUser(string firebaseUid)
+    public async Task<ActionResult<UserResponseDTO>> GetUser()
     {
         try
         {
-            var response = await _userService.GetUserAsync(firebaseUid);
+            var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
+            var response = await _userService.GetUserAsync(currentUserFirebaseUid);
             return Ok(response);
         }
         catch (Exception ex)
@@ -32,15 +33,15 @@ public class UsersController : ControllerBase
         }
     }
 
-    [HttpPut("{firebaseUid}")]
+    [HttpPut]
     [Authorize]
-    public async Task<ActionResult<UserResponseDTO>> UpdateProfile(string firebaseUid, [FromBody] UpdateUserRequestDTO request)
+    public async Task<ActionResult<UserResponseDTO>> UpdateProfile([FromBody] UpdateUserRequestDTO request)
     {
         try
         {
-            var currentUserFirebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
 
-            var response = await _userService.UpdateUserAsync(firebaseUid, request, currentUserFirebaseUid);
+            var response = await _userService.UpdateUserAsync(request, currentUserFirebaseUid);
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
@@ -53,15 +54,15 @@ public class UsersController : ControllerBase
         }
     }
 
-    [HttpDelete("{firebaseUid}")]
+    [HttpDelete]
     [Authorize]
-    public async Task<ActionResult> DeleteUser(string firebaseUid)
+    public async Task<ActionResult> DeleteUser()
     {
         try
         {
-            var currentUserFirebaseUid = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
 
-            await _userService.DeleteUserAsync(firebaseUid, currentUserFirebaseUid);
+            await _userService.DeleteUserAsync(currentUserFirebaseUid);
             return Ok(new { message = "User deleted successfully" });
         }
         catch (UnauthorizedAccessException ex)
