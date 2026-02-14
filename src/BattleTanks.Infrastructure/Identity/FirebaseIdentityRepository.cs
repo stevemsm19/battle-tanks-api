@@ -27,7 +27,7 @@ public class FirebaseIdentityRepository : IIdentityProvider
         }
     }
 
-    public async Task UpdateUserAsync(string uid, string? nickname, string? email, string? password)
+    public async Task UpdateUserAsync(string uid, string? nickname, string? email)
     {
         try
         {
@@ -41,9 +41,6 @@ public class FirebaseIdentityRepository : IIdentityProvider
 
             if (!string.IsNullOrWhiteSpace(email)) 
                 args.Email = email;
-
-            if (!string.IsNullOrWhiteSpace(password))
-                args.Password = password;
 
             await FirebaseAuth.DefaultInstance.UpdateUserAsync(args);
         }

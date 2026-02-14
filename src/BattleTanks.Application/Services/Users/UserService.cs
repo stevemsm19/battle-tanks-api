@@ -46,7 +46,7 @@ public class UserService : IUserService
             throw new Exception("User not found");
         }
 
-        await _identityProvider.UpdateUserAsync(currentUserFirebaseUid, request.Nickname, request.Email, request.Password);
+        await _identityProvider.UpdateUserAsync(currentUserFirebaseUid, request.Nickname, request.Email);
 
         if (!string.IsNullOrWhiteSpace(request.Nickname))
         {

@@ -6,9 +6,6 @@ public class UpdateUserRequestDTO
 {
     public string Nickname { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-
-    [MinLength(6)]
-    public string? Password { get; set; }
 }
 
 public class UserResponseDTO
