@@ -58,7 +58,9 @@ public class RoomService : IRoomService
         });
 
         await _roomRepository.AddAsync(room);
-        return RoomDTO.FromEntity(room);
+        var roomDto = RoomDTO.FromEntity(room);
+        await _gameNotificationService.SendGameEventAsync("SearchRoom", "RoomCreated", roomDto);
+        return roomDto;
     }
 
     public async Task<bool> JoinRoomAsync(Guid roomId, string firebaseUid)
@@ -92,7 +94,7 @@ public class RoomService : IRoomService
         await _gameNotificationService.SendGameEventAsync(roomId.ToString(), "PlayerJoined", new
         {
             id = user.Id.ToString(),
-            name = user.DisplayName,
+            name = user.Nickname,
             status = "waiting",
             x = 0,
             y = 0

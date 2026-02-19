@@ -11,7 +11,7 @@ public record RoomDetailDTO(Guid RoomId, string RoomName, IEnumerable<RoomPlayer
             room.Name,
             room.RoomUsers.Select(ru => new RoomPlayerDTO(
                 ru.User.Id.ToString(),
-                ru.User.DisplayName
+                ru.User.Nickname
             ))
         );
     }
