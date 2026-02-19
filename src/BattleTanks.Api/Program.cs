@@ -15,6 +15,9 @@ using BattleTanks.Application.Services.Rooms;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
+using BattleTanks.Infrastructure.Hubs;
+using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Infrastructure.Services.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +38,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:4200")
                    .AllowAnyMethod()
-                   .AllowAnyHeader();
+                   .AllowAnyHeader()
+                   .AllowCredentials();
         });
 });
 
@@ -52,6 +56,9 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IGameNotificationService, GameNotificationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
@@ -76,5 +83,6 @@ app.UseAuthorization();
 app.UseMiddleware<UserTokenValidationMiddleware>();
 
 app.MapControllers();
+app.MapHub<GameHub>("/gameHub");
 
 app.Run();
