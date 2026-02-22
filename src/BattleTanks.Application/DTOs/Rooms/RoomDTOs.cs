@@ -34,3 +34,9 @@ public class CreateRoomDTO
     [Range(2, 4, ErrorMessage = "Max players must be between 2 and 4.")]
     public int MaxPlayers { get; set; }
 }
+
+public class JoinRoomRequestDTO
+{
+    [Required(ErrorMessage = "Room ID is required.")]
+    public Guid RoomId { get; set; }
+}

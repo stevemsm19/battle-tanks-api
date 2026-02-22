@@ -40,4 +40,14 @@ public class RoomRepository : IRoomRepository
         _dbContext.Rooms.Update(room);
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task<Room?> GetRoomByUserIdAsync(Guid userId)
+    {
+        return await _dbContext.Rooms
+            .Include(r => r.RoomUsers)
+            .FirstOrDefaultAsync(r => 
+                r.Status == BattleTanks.Domain.Enums.RoomStatus.Open && 
+                r.RoomUsers.Any(ru => ru.UserId == userId)
+            );
+    }
 }

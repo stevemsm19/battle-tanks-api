@@ -33,21 +33,15 @@ public class RoomService : IRoomService
     public async Task<RoomDetailDTO?> GetRoomByIdAsync(Guid roomId)
     {
         var room = await _roomRepository.GetByIdAsync(roomId);
-        if (room == null) return null;
+        if (room == null) throw new NotFoundException("Room not found");
         return RoomDetailDTO.FromEntity(room);
     }
 
     public async Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto)
     {
-        if (string.IsNullOrWhiteSpace(createRoomDto.Name))
-            throw new BadRequestException("Room name is required.");
+        var user = _userContext.CurrentUser!;
 
-        if (createRoomDto.MaxPlayers < 2 || createRoomDto.MaxPlayers > 4)
-            throw new BadRequestException("Max players must be between 2 and 4.");
-
-        var user = _userContext.CurrentUser;
-        if (user == null)
-            throw new NotFoundException("User not found");
+        await ValidateUserNotInAnotherRoomAsync(user.Id);
 
         var room = new Room
         {
@@ -73,6 +67,8 @@ public class RoomService : IRoomService
 
     public async Task<bool> JoinRoomAsync(Guid roomId)
     {
+        var user = _userContext.CurrentUser!;
+
         var room = await _roomRepository.GetByIdAsync(roomId);
         if (room == null)
             throw new NotFoundException("Room not found");
@@ -80,12 +76,7 @@ public class RoomService : IRoomService
         if (room.Status != RoomStatus.Open)
             throw new BadRequestException("Room is closed or cancelled");
 
-        var user = _userContext.CurrentUser;
-        if (user == null)
-            throw new NotFoundException("User not found");
-            
-        if (room.RoomUsers.Any(ru => ru.UserId == user.Id))
-            return true;
+        await ValidateUserNotInAnotherRoomAsync(user.Id, roomId);
 
         if (room.RoomUsers.Count >= room.MaxPlayers)
             throw new BadRequestException("Room is full");
@@ -104,11 +95,24 @@ public class RoomService : IRoomService
         {
             id = user.Id.ToString(),
             name = user.Nickname,
-            status = "waiting",
-            x = 0,
-            y = 0
+            status = "waiting"
         });
 
         return true;
+    }
+
+    private async Task ValidateUserNotInAnotherRoomAsync(Guid userId, Guid? joiningRoomId = null)
+    {
+        var existingRoom = await _roomRepository.GetRoomByUserIdAsync(userId);
+        
+        if (existingRoom != null)
+        {
+            if (joiningRoomId.HasValue && existingRoom.Id == joiningRoomId.Value)
+            {
+                throw new BadRequestException("User is already in this room.");
+            }
+            
+            throw new BadRequestException($"User belongs to another room:{existingRoom.Id}");
+        }
     }
 }

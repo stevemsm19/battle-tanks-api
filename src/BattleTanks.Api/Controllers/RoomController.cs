@@ -29,10 +29,7 @@ public class RoomController : ControllerBase
     [Authorize]
     public async Task<ActionResult<RoomDetailDTO>> GetRoomById(Guid id)
     {
-        var room = await _roomService.GetRoomByIdAsync(id);
-        if (room == null)
-            return NotFound(new { message = "Room not found." });
-            
+        var room = await _roomService.GetRoomByIdAsync(id);            
         return Ok(room);
     }
 
@@ -44,11 +41,11 @@ public class RoomController : ControllerBase
         return CreatedAtAction(nameof(GetAllRooms), new { id = room.Id }, room);
     }
 
-    [HttpPut("{id}/join")]
+    [HttpPost("join")]
     [Authorize]
-    public async Task<IActionResult> JoinRoom(Guid id)
+    public async Task<IActionResult> JoinRoom([FromBody] JoinRoomRequestDTO request)
     {
-        await _roomService.JoinRoomAsync(id);
+        await _roomService.JoinRoomAsync(request.RoomId);
         return Ok(new { message = "Joined room successfully" });
     }
 }
