@@ -31,6 +31,7 @@ public class UserService : IUserService
             FirebaseUid = user.FirebaseUid,
             Email = user.Email,
             Nickname = user.Nickname,
+            AvatarUrl = user.AvatarUrl,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
         });
@@ -52,6 +53,11 @@ public class UserService : IUserService
             user.Email = request.Email;
         }
 
+        if (request.AvatarUrl != null)
+        {
+            user.AvatarUrl = request.AvatarUrl;
+        }
+
         user.UpdatedAt = DateTime.UtcNow;
 
         _userRepository.Update(user);
@@ -63,6 +69,7 @@ public class UserService : IUserService
             FirebaseUid = user.FirebaseUid,
             Email = user.Email,
             Nickname = user.Nickname,
+            AvatarUrl = user.AvatarUrl,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
         };

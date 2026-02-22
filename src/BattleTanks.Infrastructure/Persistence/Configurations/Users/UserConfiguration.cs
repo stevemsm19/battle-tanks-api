@@ -30,6 +30,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(256);
         
+        builder.Property(u => u.AvatarUrl)
+            .IsRequired()
+            .HasMaxLength(2048);
+        
         builder.HasMany(u => u.RoomUsers)
             .WithOne(ru => ru.User)
             .HasForeignKey(ru => ru.UserId)

@@ -24,6 +24,10 @@ public class AuthService : IAuthService
         var nicknameExists = await _userRepository.ExistsByNicknameAsync(request.Nickname);
         if (nicknameExists)
             throw new BadRequestException("Nickname is already taken.");
+        
+        var emailExists = await _userRepository.ExistsByEmailAsync(request.Email);
+        if (emailExists)
+            throw new BadRequestException("Email is already registered.");
 
         string uid;
 

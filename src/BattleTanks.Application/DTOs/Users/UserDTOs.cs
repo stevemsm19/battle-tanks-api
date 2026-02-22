@@ -11,6 +11,8 @@ public class UpdateUserRequestDTO
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
     public string Email { get; set; } = string.Empty;
+
+    public string? AvatarUrl { get; set; }
 }
 
 public class UserResponseDTO
@@ -19,6 +21,7 @@ public class UserResponseDTO
     public string FirebaseUid { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
