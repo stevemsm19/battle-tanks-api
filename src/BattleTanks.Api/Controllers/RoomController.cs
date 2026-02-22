@@ -40,14 +40,7 @@ public class RoomController : ControllerBase
     [Authorize]
     public async Task<ActionResult<RoomDTO>> CreateRoom([FromBody] CreateRoomDTO createRoomDto)
     {
-        if (string.IsNullOrWhiteSpace(createRoomDto.Name))
-            return BadRequest(new { message = "Room name is required." });
-
-        var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
-        if (string.IsNullOrEmpty(firebaseUid))
-            return NotFound(new { message = "User not found." });
-
-        var room = await _roomService.CreateRoomAsync(createRoomDto, firebaseUid);
+        var room = await _roomService.CreateRoomAsync(createRoomDto);
         return CreatedAtAction(nameof(GetAllRooms), new { id = room.Id }, room);
     }
 
@@ -55,12 +48,7 @@ public class RoomController : ControllerBase
     [Authorize]
     public async Task<IActionResult> JoinRoom(Guid id)
     {
-        var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
-        
-        if (string.IsNullOrEmpty(firebaseUid))
-            return NotFound(new { message = "User not found." });
-
-        await _roomService.JoinRoomAsync(id, firebaseUid);
+        await _roomService.JoinRoomAsync(id);
         return Ok(new { message = "Joined room successfully" });
     }
 }

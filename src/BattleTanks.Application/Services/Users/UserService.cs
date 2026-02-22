@@ -3,6 +3,8 @@ using BattleTanks.Application.Interfaces;
 using BattleTanks.Domain.Entities.Users;
 using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
+using BattleTanks.Application.Exceptions;
+using BattleTanks.Application.Common.Interfaces;
 
 namespace BattleTanks.Application.Services.Users;
 
@@ -10,23 +12,20 @@ public class UserService : IUserService
 {
     private readonly IIdentityProvider _identityProvider;
     private readonly IUserRepository _userRepository;
+    private readonly IUserContext _userContext;
 
-    public UserService(IIdentityProvider identityProvider, IUserRepository userRepository)
+    public UserService(IIdentityProvider identityProvider, IUserRepository userRepository, IUserContext userContext)
     {
         _identityProvider = identityProvider;
         _userRepository = userRepository;
+        _userContext = userContext;
     }
 
-    public async Task<UserResponseDTO> GetUserAsync(string currentUserFirebaseUid)
+    public Task<UserResponseDTO> GetUserAsync()
     {
-        var user = await _userRepository.GetByFirebaseUidAsync(currentUserFirebaseUid);
+        var user = _userContext.CurrentUser!;
 
-        if (user == null)
-        {
-            throw new Exception("User not found");
-        }
-
-        return new UserResponseDTO
+        return Task.FromResult(new UserResponseDTO
         {
             Id = user.Id,
             FirebaseUid = user.FirebaseUid,
@@ -34,19 +33,14 @@ public class UserService : IUserService
             Nickname = user.Nickname,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
-        };
+        });
     }
 
-    public async Task<UserResponseDTO> UpdateUserAsync(UpdateUserRequestDTO request, string currentUserFirebaseUid)
+    public async Task<UserResponseDTO> UpdateUserAsync(UpdateUserRequestDTO request)
     {
-        var user = await _userRepository.GetByFirebaseUidAsync(currentUserFirebaseUid);
-        
-        if (user == null)
-        {
-            throw new Exception("User not found");
-        }
+        var user = _userContext.CurrentUser!;
 
-        await _identityProvider.UpdateUserAsync(currentUserFirebaseUid, request.Nickname, request.Email);
+        await _identityProvider.UpdateUserAsync(user.FirebaseUid, request.Nickname, request.Email);
 
         if (!string.IsNullOrWhiteSpace(request.Nickname))
         {
@@ -74,16 +68,11 @@ public class UserService : IUserService
         };
     }
 
-    public async Task DeleteUserAsync(string currentUserFirebaseUid)
+    public async Task DeleteUserAsync()
     {
-        var user = await _userRepository.GetByFirebaseUidAsync(currentUserFirebaseUid);
-        
-        if (user == null)
-        {
-            throw new Exception("User not found");
-        }
+        var user = _userContext.CurrentUser!;
 
-        await _identityProvider.DeleteUserAsync(currentUserFirebaseUid);
+        await _identityProvider.DeleteUserAsync(user.FirebaseUid);
 
         _userRepository.Delete(user);
         await _userRepository.SaveChangesAsync();

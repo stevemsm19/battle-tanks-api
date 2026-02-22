@@ -4,7 +4,7 @@ namespace BattleTanks.Application.Interfaces;
 
 public interface IUserService
 {
-    Task<UserResponseDTO> GetUserAsync(string currentUserFirebaseUid);
-    Task<UserResponseDTO> UpdateUserAsync(UpdateUserRequestDTO request, string currentUserFirebaseUid);
-    Task DeleteUserAsync(string currentUserFirebaseUid);
+    Task<UserResponseDTO> GetUserAsync();
+    Task<UserResponseDTO> UpdateUserAsync(UpdateUserRequestDTO request);
+    Task DeleteUserAsync();
 }

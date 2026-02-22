@@ -5,8 +5,8 @@ using BattleTanks.Domain.Interfaces.Rooms;
 using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Domain.Enums;
 using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Exceptions;
 
-// TODO: Exception Handling
 namespace BattleTanks.Application.Services.Rooms;
 
 public class RoomService : IRoomService
@@ -14,12 +14,14 @@ public class RoomService : IRoomService
     private readonly IRoomRepository _roomRepository;
     private readonly IUserRepository _userRepository;
     private readonly IGameNotificationService _gameNotificationService;
+    private readonly IUserContext _userContext;
 
-    public RoomService(IRoomRepository roomRepository, IUserRepository userRepository, IGameNotificationService gameNotificationService)
+    public RoomService(IRoomRepository roomRepository, IUserRepository userRepository, IGameNotificationService gameNotificationService, IUserContext userContext)
     {
         _roomRepository = roomRepository;
         _userRepository = userRepository;
         _gameNotificationService = gameNotificationService;
+        _userContext = userContext;
     }
 
     public async Task<IEnumerable<RoomDTO>> GetAllRoomsAsync()
@@ -35,17 +37,23 @@ public class RoomService : IRoomService
         return RoomDetailDTO.FromEntity(room);
     }
 
-    public async Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto, string firebaseUid)
+    public async Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto)
     {
-        var user = await _userRepository.GetByFirebaseUidAsync(firebaseUid);
+        if (string.IsNullOrWhiteSpace(createRoomDto.Name))
+            throw new BadRequestException("Room name is required.");
+
+        if (createRoomDto.MaxPlayers < 2 || createRoomDto.MaxPlayers > 4)
+            throw new BadRequestException("Max players must be between 2 and 4.");
+
+        var user = _userContext.CurrentUser;
         if (user == null)
-            throw new Exception("User not found");
+            throw new NotFoundException("User not found");
 
         var room = new Room
         {
             Id = Guid.NewGuid(),
             Name = createRoomDto.Name,
-            MaxPlayers = 4,
+            MaxPlayers = createRoomDto.MaxPlayers,
             RoomUsers = new List<RoomUser>()
         };
 
@@ -63,23 +71,24 @@ public class RoomService : IRoomService
         return roomDto;
     }
 
-    public async Task<bool> JoinRoomAsync(Guid roomId, string firebaseUid)
+    public async Task<bool> JoinRoomAsync(Guid roomId)
     {
         var room = await _roomRepository.GetByIdAsync(roomId);
         if (room == null)
-            throw new Exception("Room not found");
+            throw new NotFoundException("Room not found");
 
         if (room.Status != RoomStatus.Open)
-            throw new Exception("Room is closed or cancelled");
+            throw new BadRequestException("Room is closed or cancelled");
 
-        var user = await _userRepository.GetByFirebaseUidAsync(firebaseUid);
+        var user = _userContext.CurrentUser;
         if (user == null)
-            throw new Exception("User not found");
+            throw new NotFoundException("User not found");
+            
         if (room.RoomUsers.Any(ru => ru.UserId == user.Id))
             return true;
 
         if (room.RoomUsers.Count >= room.MaxPlayers)
-            throw new Exception("Room is full");
+            throw new BadRequestException("Room is full");
 
         room.RoomUsers.Add(new RoomUser
         {

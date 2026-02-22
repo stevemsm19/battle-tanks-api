@@ -17,6 +17,7 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
 using BattleTanks.Infrastructure.Hubs;
 using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Infrastructure.Services;
 using BattleTanks.Infrastructure.Services.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +63,9 @@ builder.Services.AddScoped<IGameNotificationService, GameNotificationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
 
 var app = builder.Build();
 
