@@ -86,7 +86,7 @@ public class RoomService : IRoomService
             RoomId = room.Id,
             UserId = user.Id,
             IsOwner = false,
-            IsReady = false
+            IsReady = true
         });
         
         await _roomRepository.UpdateAsync(room);
@@ -99,6 +99,45 @@ public class RoomService : IRoomService
         });
 
         return true;
+    }
+
+    public async Task LeaveRoomAsync(Guid roomId)
+    {
+        var user = _userContext.CurrentUser!;
+
+        var room = await _roomRepository.GetByIdAsync(roomId);
+        if (room == null)
+            throw new NotFoundException("Room not found.");
+
+        var roomUser = room.RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id);
+        if (roomUser == null)
+            throw new BadRequestException("User does not belong to this room.");
+
+        var wasOwner = roomUser.IsOwner;
+
+        room.RoomUsers.Remove(roomUser);
+
+        if (room.RoomUsers.Count == 0)
+        {
+            await _roomRepository.DeleteAsync(room);
+            await _gameNotificationService.SendGameEventAsync("SearchRoom", "RoomDeleted", new { roomId = room.Id });
+            return;
+        }
+
+        if (wasOwner)
+        {
+            var newOwner = room.RoomUsers.First();
+            newOwner.IsOwner = true;
+        }
+
+        await _roomRepository.UpdateAsync(room);
+
+        var newOwnerId = wasOwner ? room.RoomUsers.First().UserId : (Guid?)null;
+        await _gameNotificationService.SendGameEventAsync(room.Id.ToString(), "PlayerLeft", new
+        {
+            userId = user.Id.ToString(),
+            newOwnerId = newOwnerId?.ToString()
+        });
     }
 
     private async Task ValidateUserNotInAnotherRoomAsync(Guid userId, Guid? joiningRoomId = null)

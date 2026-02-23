@@ -8,4 +8,5 @@ public interface IRoomService
     Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto);
     Task<RoomDetailDTO?> GetRoomByIdAsync(Guid roomId);
     Task<bool> JoinRoomAsync(Guid roomId);
+    Task LeaveRoomAsync(Guid roomId);
 }

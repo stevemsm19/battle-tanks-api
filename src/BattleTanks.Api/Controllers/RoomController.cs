@@ -48,4 +48,12 @@ public class RoomController : ControllerBase
         await _roomService.JoinRoomAsync(request.RoomId);
         return Ok(new { message = "Joined room successfully" });
     }
+
+    [HttpDelete("leave/{id}")]
+    [Authorize]
+    public async Task<IActionResult> LeaveRoom(Guid id)
+    {
+        await _roomService.LeaveRoomAsync(id);
+        return NoContent();
+    }
 }

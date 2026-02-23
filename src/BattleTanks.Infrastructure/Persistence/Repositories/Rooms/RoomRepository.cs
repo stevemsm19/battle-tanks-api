@@ -41,6 +41,12 @@ public class RoomRepository : IRoomRepository
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task DeleteAsync(Room room)
+    {
+        _dbContext.Rooms.Remove(room);
+        await _dbContext.SaveChangesAsync();
+    }
+
     public async Task<Room?> GetRoomByUserIdAsync(Guid userId)
     {
         return await _dbContext.Rooms
