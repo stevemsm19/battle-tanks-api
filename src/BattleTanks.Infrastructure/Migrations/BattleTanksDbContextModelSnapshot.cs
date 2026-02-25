@@ -42,6 +42,8 @@ namespace BattleTanks.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Status");
+
                     b.ToTable("rooms", (string)null);
                 });
 
