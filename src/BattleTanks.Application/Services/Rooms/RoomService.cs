@@ -1,3 +1,4 @@
+using BattleTanks.Application.Common;
 using BattleTanks.Application.DTOs.Rooms;
 using BattleTanks.Application.Interfaces.Rooms;
 using BattleTanks.Domain.Entities.Rooms;
@@ -24,10 +25,16 @@ public class RoomService : IRoomService
         _userContext = userContext;
     }
 
-    public async Task<IEnumerable<RoomDTO>> GetAllRoomsAsync()
+    public async Task<PagedResult<RoomDTO>> GetAllRoomsAsync(RoomQueryParams queryParams)
     {
-        var rooms = await _roomRepository.GetAllAsync();
-        return rooms.Select(RoomDTO.FromEntity);
+        var (items, totalCount) = await _roomRepository.GetAllAsync(queryParams.Page, queryParams.Size);
+        return new PagedResult<RoomDTO>
+        {
+            Items = items.Select(RoomDTO.FromEntity),
+            TotalCount = totalCount,
+            Page = queryParams.Page,
+            Size = queryParams.Size
+        };
     }
 
     public async Task<RoomDetailDTO?> GetRoomByIdAsync(Guid roomId)
@@ -48,6 +55,7 @@ public class RoomService : IRoomService
             Id = Guid.NewGuid(),
             Name = createRoomDto.Name,
             MaxPlayers = createRoomDto.MaxPlayers,
+            CreatedAt = DateTime.UtcNow,
             RoomUsers = new List<RoomUser>()
         };
 

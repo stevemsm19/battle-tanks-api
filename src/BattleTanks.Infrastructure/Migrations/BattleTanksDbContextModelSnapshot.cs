@@ -28,6 +28,11 @@ namespace BattleTanks.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasDefaultValueSql("NOW()");
+
                     b.Property<int>("MaxPlayers")
                         .HasColumnType("integer");
 

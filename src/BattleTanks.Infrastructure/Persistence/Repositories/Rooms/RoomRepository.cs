@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using BattleTanks.Domain.Entities.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
 
@@ -24,14 +22,21 @@ public class RoomRepository : IRoomRepository
         return result;
     }
 
-    public async Task<IEnumerable<Room>> GetAllAsync()
+    public async Task<(IEnumerable<Room> Items, int TotalCount)> GetAllAsync(int page, int size)
     {
-        var result = await _dbContext.Rooms
-            .AsNoTracking()
+        var query = _dbContext.Rooms.AsNoTracking();
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .Include(r => r.RoomUsers)
             .ThenInclude(ru => ru.User)
+            .OrderBy(r => r.CreatedAt)
+            .Skip((page - 1) * size)
+            .Take(size)
             .ToListAsync();
-        return result;
+
+        return (items, totalCount);
     }
 
     public async Task AddAsync(Room room)

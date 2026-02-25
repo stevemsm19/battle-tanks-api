@@ -1,3 +1,4 @@
+using BattleTanks.Application.Common;
 using BattleTanks.Application.DTOs.Rooms;
 using BattleTanks.Application.Interfaces.Rooms;
 using Microsoft.AspNetCore.Authorization;
@@ -19,10 +20,10 @@ public class RoomController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<RoomDTO>>> GetAllRooms()
+    public async Task<ActionResult<PagedResult<RoomDTO>>> GetAllRooms([FromQuery] RoomQueryParams queryParams)
     {
-        var rooms = await _roomService.GetAllRoomsAsync();
-        return Ok(rooms);
+        var result = await _roomService.GetAllRoomsAsync(queryParams);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

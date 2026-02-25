@@ -24,6 +24,10 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
 
         builder.HasIndex(r => r.Status);
 
+        builder.Property(r => r.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("NOW()");
+
         builder.HasMany(r => r.RoomUsers)
             .WithOne(ru => ru.Room)
             .HasForeignKey(ru => ru.RoomId)
