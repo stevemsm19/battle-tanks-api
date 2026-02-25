@@ -1,3 +1,4 @@
+using BattleTanks.Application.Common;
 using BattleTanks.Application.DTOs.Rooms;
 using BattleTanks.Application.Interfaces.Rooms;
 using Microsoft.AspNetCore.Authorization;
@@ -19,20 +20,17 @@ public class RoomController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<RoomDTO>>> GetAllRooms()
+    public async Task<ActionResult<PagedResult<RoomDTO>>> GetAllRooms([FromQuery] RoomQueryParams queryParams)
     {
-        var rooms = await _roomService.GetAllRoomsAsync();
-        return Ok(rooms);
+        var result = await _roomService.GetAllRoomsAsync(queryParams);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
     [Authorize]
     public async Task<ActionResult<RoomDetailDTO>> GetRoomById(Guid id)
     {
-        var room = await _roomService.GetRoomByIdAsync(id);
-        if (room == null)
-            return NotFound(new { message = "Room not found." });
-            
+        var room = await _roomService.GetRoomByIdAsync(id);            
         return Ok(room);
     }
 
@@ -40,27 +38,23 @@ public class RoomController : ControllerBase
     [Authorize]
     public async Task<ActionResult<RoomDTO>> CreateRoom([FromBody] CreateRoomDTO createRoomDto)
     {
-        if (string.IsNullOrWhiteSpace(createRoomDto.Name))
-            return BadRequest(new { message = "Room name is required." });
-
-        var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
-        if (string.IsNullOrEmpty(firebaseUid))
-            return NotFound(new { message = "User not found." });
-
-        var room = await _roomService.CreateRoomAsync(createRoomDto, firebaseUid);
+        var room = await _roomService.CreateRoomAsync(createRoomDto);
         return CreatedAtAction(nameof(GetAllRooms), new { id = room.Id }, room);
     }
 
-    [HttpPut("{id}/join")]
+    [HttpPost("join")]
     [Authorize]
-    public async Task<IActionResult> JoinRoom(Guid id)
+    public async Task<IActionResult> JoinRoom([FromBody] JoinRoomRequestDTO request)
     {
-        var firebaseUid = User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
-        
-        if (string.IsNullOrEmpty(firebaseUid))
-            return NotFound(new { message = "User not found." });
-
-        await _roomService.JoinRoomAsync(id, firebaseUid);
+        await _roomService.JoinRoomAsync(request.RoomId);
         return Ok(new { message = "Joined room successfully" });
+    }
+
+    [HttpDelete("leave/{id}")]
+    [Authorize]
+    public async Task<IActionResult> LeaveRoom(Guid id)
+    {
+        await _roomService.LeaveRoomAsync(id);
+        return NoContent();
     }
 }

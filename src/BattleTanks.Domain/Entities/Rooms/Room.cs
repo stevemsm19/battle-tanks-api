@@ -10,4 +10,5 @@ public class Room
     public int MaxPlayers { get; set; } = 4;
     public ICollection<RoomUser> RoomUsers { get; set; } = new List<RoomUser>();
     public RoomStatus Status { get; set; } = RoomStatus.Open;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

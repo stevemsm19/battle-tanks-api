@@ -1,4 +1,5 @@
 using BattleTanks.Api.Helpers;
+using BattleTanks.Application.Common.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 
 namespace BattleTanks.Api.Middlewares;
@@ -12,7 +13,7 @@ public class UserTokenValidationMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, IUserRepository userRepository)
+    public async Task InvokeAsync(HttpContext context, IUserRepository userRepository, IUserContext userContext)
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
@@ -33,6 +34,8 @@ public class UserTokenValidationMiddleware
                     context.Response, 401, "Authentication error", "User without permissions.");
                 return;
             }
+
+            userContext.CurrentUser = user;
         }
 
         await _next(context);

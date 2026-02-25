@@ -2,27 +2,25 @@ using BattleTanks.Application.DTOs.Users;
 using BattleTanks.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BattleTanks.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
 
-    public UsersController(IUserService userService)
+    public UserController(IUserService userService)
     {
         _userService = userService;
     }
 
-    [HttpGet]
+    [HttpGet("me")]
     [Authorize]
     public async Task<ActionResult<UserResponseDTO>> GetUser()
     {
-        var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
-        var response = await _userService.GetUserAsync(currentUserFirebaseUid);
+        var response = await _userService.GetUserAsync();
         return Ok(response);
     }
 
@@ -30,8 +28,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult<UserResponseDTO>> UpdateProfile([FromBody] UpdateUserRequestDTO request)
     {
-        var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
-        var response = await _userService.UpdateUserAsync(request, currentUserFirebaseUid);
+        var response = await _userService.UpdateUserAsync(request);
         return Ok(response);
     }
 
@@ -39,9 +36,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult> DeleteUser()
     {
-        var currentUserFirebaseUid = User.FindFirst("user_id")?.Value;
-        await _userService.DeleteUserAsync(currentUserFirebaseUid);
+        await _userService.DeleteUserAsync();
         return Ok(new { message = "User deleted successfully" });
     }
 }
-

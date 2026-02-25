@@ -12,6 +12,8 @@ public class RoomUserConfiguration : IEntityTypeConfiguration<RoomUser>
 
         builder.HasKey(ru => new { ru.RoomId, ru.UserId });
 
+        builder.HasIndex(ru => ru.UserId);
+
         builder.HasOne(ru => ru.Room)
             .WithMany(r => r.RoomUsers)
             .HasForeignKey(ru => ru.RoomId)
