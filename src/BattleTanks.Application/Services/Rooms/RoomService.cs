@@ -94,8 +94,7 @@ public class RoomService : IRoomService
         await _gameNotificationService.SendGameEventAsync(roomId.ToString(), "PlayerJoined", new
         {
             id = user.Id.ToString(),
-            name = user.Nickname,
-            status = "waiting"
+            name = user.Nickname
         });
 
         return true;
