@@ -9,5 +9,5 @@ public interface IRoomRepository
     Task AddAsync(Room room);
     Task UpdateAsync(Room room);
     Task DeleteAsync(Room room);
-    Task<Room?> GetRoomByUserIdAsync(Guid userId);
+    Task<Room?> GetByUserIdAsync(Guid userId);
 }

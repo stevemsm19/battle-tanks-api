@@ -141,7 +141,7 @@ public class RoomService : IRoomService
 
     private async Task ValidateUserNotInAnotherRoomAsync(Guid userId, Guid? joiningRoomId = null)
     {
-        var existingRoom = await _roomRepository.GetRoomByUserIdAsync(userId);
+        var existingRoom = await _roomRepository.GetByUserIdAsync(userId);
         
         if (existingRoom != null)
         {

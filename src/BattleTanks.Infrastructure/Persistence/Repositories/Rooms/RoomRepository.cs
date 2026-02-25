@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using BattleTanks.Domain.Entities.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
 
@@ -15,18 +17,21 @@ public class RoomRepository : IRoomRepository
 
     public async Task<Room?> GetByIdAsync(Guid id)
     {
-        return await _dbContext.Rooms
+        var result = await _dbContext.Rooms
             .Include(r => r.RoomUsers)
             .ThenInclude(ru => ru.User)
             .FirstOrDefaultAsync(r => r.Id == id);
+        return result;
     }
 
     public async Task<IEnumerable<Room>> GetAllAsync()
     {
-        return await _dbContext.Rooms
+        var result = await _dbContext.Rooms
+            .AsNoTracking()
             .Include(r => r.RoomUsers)
             .ThenInclude(ru => ru.User)
             .ToListAsync();
+        return result;
     }
 
     public async Task AddAsync(Room room)
@@ -47,13 +52,14 @@ public class RoomRepository : IRoomRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<Room?> GetRoomByUserIdAsync(Guid userId)
+    public async Task<Room?> GetByUserIdAsync(Guid userId)
     {
-        return await _dbContext.Rooms
+        var result = await _dbContext.Rooms
+            .AsNoTracking()
             .Include(r => r.RoomUsers)
-            .FirstOrDefaultAsync(r => 
-                r.Status == BattleTanks.Domain.Enums.RoomStatus.Open && 
-                r.RoomUsers.Any(ru => ru.UserId == userId)
-            );
+            .FirstOrDefaultAsync(r =>
+                r.Status == BattleTanks.Domain.Enums.RoomStatus.Open &&
+                r.RoomUsers.Any(ru => ru.UserId == userId));
+        return result;
     }
 }
