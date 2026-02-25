@@ -12,13 +12,16 @@ using BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
 using BattleTanks.Application.Interfaces.Rooms;
 using BattleTanks.Application.Services.Rooms;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.EntityFrameworkCore;
-using BattleTanks.Infrastructure.Hubs;
 using BattleTanks.Application.Common.Interfaces;
 using BattleTanks.Infrastructure.Services;
 using BattleTanks.Infrastructure.Services.SignalR;
+using BattleTanks.Infrastructure.Services.Redis;
+using BattleTanks.Infrastructure.Hubs;
+using BattleTanks.Application.Interfaces;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +63,12 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IGameNotificationService, GameNotificationService>();
+
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"]!;
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(redisConnectionString));
+builder.Services.AddSingleton<IConnectedPlayerService, RedisConnectedPlayerService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
