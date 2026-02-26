@@ -12,4 +12,5 @@ public interface IUserRepository
     void Update(User user);
     void Delete(User user);
     Task SaveChangesAsync();
+    Task<IEnumerable<User>> GetTop100ByScoreAsync();
 }
