@@ -53,4 +53,13 @@ public class UserRepository : IUserRepository
     {
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<User>> GetTop100ByScoreAsync()
+    {
+        return await _dbContext.Users
+            .AsNoTracking()
+            .OrderByDescending(u => u.Score)
+            .Take(100)
+            .ToListAsync();
+    }
 }

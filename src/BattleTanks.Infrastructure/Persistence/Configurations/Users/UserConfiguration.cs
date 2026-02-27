@@ -39,6 +39,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasForeignKey(ru => ru.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         
+        builder.Property(u => u.Score)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.HasIndex(u => u.Score);
+
         builder.Property(u => u.CreatedAt)
             .IsRequired();
         

@@ -106,6 +106,11 @@ namespace BattleTanks.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<int>("Score")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
@@ -116,6 +121,8 @@ namespace BattleTanks.Infrastructure.Migrations
 
                     b.HasIndex("FirebaseUid")
                         .IsUnique();
+
+                    b.HasIndex("Score");
 
                     b.ToTable("users", (string)null);
                 });
