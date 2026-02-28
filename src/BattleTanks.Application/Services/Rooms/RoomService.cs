@@ -1,76 +1,76 @@
-using BattleTanks.Application.Common;
-using BattleTanks.Application.DTOs.Rooms;
-using BattleTanks.Application.Interfaces.Rooms;
-using BattleTanks.Domain.Entities.Rooms;
 using BattleTanks.Domain.Interfaces.Rooms;
 using BattleTanks.Domain.Interfaces.Users;
+using BattleTanks.Domain.Interfaces.Maps;
+using BattleTanks.Domain.Entities.Maps;
+using BattleTanks.Domain.Entities.Rooms;
 using BattleTanks.Domain.Enums;
-using BattleTanks.Application.Common.Interfaces;
+
+using BattleTanks.Application.DTOs;
+using BattleTanks.Application.DTOs.Rooms;
+using BattleTanks.Application.Interfaces.Rooms;
+using BattleTanks.Application.Interfaces.Game;
+using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Exceptions;
+
+using MapsterMapper;
 
 namespace BattleTanks.Application.Services.Rooms;
 
 public class RoomService : IRoomService
 {
     private readonly IRoomRepository _roomRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly IGameNotificationService _gameNotificationService;
+    private readonly IGameMapRepository _gameMapRepository;
+    private readonly INotificationService _NotificationService;
     private readonly IUserContext _userContext;
+    private readonly IMapper _mapper;
 
-    public RoomService(IRoomRepository roomRepository, IUserRepository userRepository, IGameNotificationService gameNotificationService, IUserContext userContext)
+    public RoomService(IRoomRepository roomRepository, IGameMapRepository gameMapRepository, INotificationService NotificationService, IUserContext userContext, IMapper mapper)
     {
         _roomRepository = roomRepository;
-        _userRepository = userRepository;
-        _gameNotificationService = gameNotificationService;
+        _gameMapRepository = gameMapRepository;
+        _NotificationService = NotificationService;
         _userContext = userContext;
+        _mapper = mapper;
     }
 
-    public async Task<PagedResult<RoomDTO>> GetAllRoomsAsync(RoomQueryParams queryParams)
+    public async Task<RoomResponseDTO> CreateRoomAsync(CreateRoomRequestDTO CreateRoomRequestDTO)
     {
-        var (items, totalCount) = await _roomRepository.GetAllAsync(queryParams.Page, queryParams.Size);
-        return new PagedResult<RoomDTO>
+        var user = _userContext.CurrentUser!;
+
+        await ValidateUserNotInAnotherRoomAsync(user.Id);
+
+        var mapId = CreateRoomRequestDTO.GameMapId;
+        var map = await _gameMapRepository.GetByIdAsync(mapId);
+        if (map == null) throw new BadRequestException("Invalid map ID");
+
+        var room = _mapper.From(CreateRoomRequestDTO)
+                          .AddParameters("User", user)
+                          .AdaptToType<Room>();
+
+        await _roomRepository.AddAsync(room);
+        var roomDto = _mapper.Map<RoomResponseDTO>(room);
+        await _NotificationService.SendEventAsync("SearchRoom", "RoomCreated", roomDto);
+        return roomDto;
+    }
+
+    public async Task<PagedResult<RoomResponseDTO>> GetAllRoomsAsync(RoomQueryParams queryParams)
+    {
+        var (items, totalCount) = await _roomRepository.GetAllAsync(queryParams.Page, queryParams.Size, queryParams.Status);
+        var roomDTOs = items.Select(r => _mapper.Map<RoomResponseDTO>(r));
+        return new PagedResult<RoomResponseDTO>
         {
-            Items = items.Select(RoomDTO.FromEntity),
+            Items = roomDTOs,
             TotalCount = totalCount,
             Page = queryParams.Page,
             Size = queryParams.Size
         };
     }
 
-    public async Task<RoomDetailDTO?> GetRoomByIdAsync(Guid roomId)
+    public async Task<RoomWithPlayersResponseDTO?> GetRoomByIdAsync(Guid roomId)
     {
         var room = await _roomRepository.GetByIdAsync(roomId);
         if (room == null) throw new NotFoundException("Room not found");
-        return RoomDetailDTO.FromEntity(room);
-    }
-
-    public async Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto)
-    {
-        var user = _userContext.CurrentUser!;
-
-        await ValidateUserNotInAnotherRoomAsync(user.Id);
-
-        var room = new Room
-        {
-            Id = Guid.NewGuid(),
-            Name = createRoomDto.Name,
-            MaxPlayers = createRoomDto.MaxPlayers,
-            CreatedAt = DateTime.UtcNow,
-            RoomUsers = new List<RoomUser>()
-        };
-
-        room.RoomUsers.Add(new RoomUser
-        {
-            RoomId = room.Id,
-            UserId = user.Id,
-            IsOwner = true,
-            IsReady = true
-        });
-
-        await _roomRepository.AddAsync(room);
-        var roomDto = RoomDTO.FromEntity(room);
-        await _gameNotificationService.SendGameEventAsync("SearchRoom", "RoomCreated", roomDto);
-        return roomDto;
+        return _mapper.Map<RoomWithPlayersResponseDTO>(room);
     }
 
     public async Task<bool> JoinRoomAsync(Guid roomId)
@@ -99,10 +99,16 @@ public class RoomService : IRoomService
         
         await _roomRepository.UpdateAsync(room);
 
-        await _gameNotificationService.SendGameEventAsync(roomId.ToString(), "PlayerJoined", new
+        await _NotificationService.SendEventAsync(roomId.ToString(), "PlayerJoined", new
         {
             id = user.Id.ToString(),
             name = user.Nickname
+        });
+
+        await _NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
+        {
+            roomId = room.Id.ToString(),
+            currentPlayers = room.RoomUsers.Count
         });
 
         return true;
@@ -126,8 +132,9 @@ public class RoomService : IRoomService
 
         if (room.RoomUsers.Count == 0)
         {
-            await _roomRepository.DeleteAsync(room);
-            await _gameNotificationService.SendGameEventAsync("SearchRoom", "RoomDeleted", new { roomId = room.Id });
+            room.Status = RoomStatus.Cancelled;
+            await _roomRepository.UpdateAsync(room);
+            await _NotificationService.SendEventAsync("SearchRoom", "RoomStatusChanged", new { roomId = room.Id });
             return;
         }
 
@@ -140,10 +147,16 @@ public class RoomService : IRoomService
         await _roomRepository.UpdateAsync(room);
 
         var newOwnerId = wasOwner ? room.RoomUsers.First().UserId : (Guid?)null;
-        await _gameNotificationService.SendGameEventAsync(room.Id.ToString(), "PlayerLeft", new
+        await _NotificationService.SendEventAsync(room.Id.ToString(), "PlayerLeft", new
         {
             userId = user.Id.ToString(),
             newOwnerId = newOwnerId?.ToString()
+        });
+
+        await _NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
+        {
+            roomId = room.Id.ToString(),
+            currentPlayers = room.RoomUsers.Count
         });
     }
 

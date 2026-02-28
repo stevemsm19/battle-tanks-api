@@ -3,39 +3,30 @@ using BattleTanks.Domain.Entities.Rooms;
 
 namespace BattleTanks.Application.DTOs.Rooms;
 
-public class RoomDTO
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int MaxPlayers { get; set; }
-    public int CurrentPlayers { get; set; }
-    public string Status { get; set; } = string.Empty;
-    
-    public static RoomDTO FromEntity(Room room)
-    {
-        return new RoomDTO
-        {
-            Id = room.Id,
-            Name = room.Name,
-            MaxPlayers = room.MaxPlayers,
-            CurrentPlayers = room.RoomUsers.Count,
-            Status = room.Status.ToString()
-        };
-    }
-}
+public record CreateRoomRequestDTO(
+    [Required, StringLength(50, MinimumLength = 3)] string Name,
+    [Range(2, 4)] int MaxPlayers,
+    [Required] Guid GameMapId
+);
 
-public class CreateRoomDTO
-{
-    [Required(ErrorMessage = "Room name is required.")]
-    [StringLength(50, MinimumLength = 3, ErrorMessage = "Room name must be between 3 and 50 characters.")]
-    public string Name { get; set; } = string.Empty;
+public record RoomResponseDTO(
+    Guid Id,
+    string Name,
+    int MaxPlayers,
+    int CurrentPlayers,
+    string Status,
+    Guid GameMapId,
+    string GameMapName
+);
 
-    [Range(2, 4, ErrorMessage = "Max players must be between 2 and 4.")]
-    public int MaxPlayers { get; set; }
-}
+public record RoomPlayerResponseDTO(
+    string Id, 
+    string FirebaseUid, 
+    string Name, 
+    bool IsOwner
+);
 
-public class JoinRoomRequestDTO
-{
-    [Required(ErrorMessage = "Room ID is required.")]
-    public Guid RoomId { get; set; }
-}
+public record RoomWithPlayersResponseDTO(
+    RoomResponseDTO Room,
+    IEnumerable<RoomPlayerResponseDTO> Players
+);

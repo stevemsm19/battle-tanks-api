@@ -1,4 +1,4 @@
-using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Interfaces;
 using BattleTanks.Domain.Entities.Users;
 
 namespace BattleTanks.Infrastructure.Services;

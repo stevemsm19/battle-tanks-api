@@ -16,19 +16,27 @@ public class RoomRepository : IRoomRepository
     public async Task<Room?> GetByIdAsync(Guid id)
     {
         var result = await _dbContext.Rooms
+            .Include(r => r.GameMap)
             .Include(r => r.RoomUsers)
             .ThenInclude(ru => ru.User)
             .FirstOrDefaultAsync(r => r.Id == id);
         return result;
     }
 
-    public async Task<(IEnumerable<Room> Items, int TotalCount)> GetAllAsync(int page, int size)
+    public async Task<(IEnumerable<Room> Items, int TotalCount)> GetAllAsync(int page, int size, string? status = null)
     {
         var query = _dbContext.Rooms.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(status) &&
+            Enum.TryParse<BattleTanks.Domain.Enums.RoomStatus>(status, ignoreCase: true, out var parsedStatus))
+        {
+            query = query.Where(r => r.Status == parsedStatus);
+        }
 
         var totalCount = await query.CountAsync();
 
         var items = await query
+            .Include(r => r.GameMap)
             .Include(r => r.RoomUsers)
             .ThenInclude(ru => ru.User)
             .OrderBy(r => r.CreatedAt)

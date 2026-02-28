@@ -1,6 +1,7 @@
-using BattleTanks.Application.Common;
+using BattleTanks.Application.DTOs;
 using BattleTanks.Application.DTOs.Rooms;
 using BattleTanks.Application.Interfaces.Rooms;
+using BattleTanks.Application.Interfaces.Game;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,15 +13,25 @@ namespace BattleTanks.Api.Controllers;
 public class RoomController : ControllerBase
 {
     private readonly IRoomService _roomService;
+    private readonly IGameSessionService _gameSessionService;
 
-    public RoomController(IRoomService roomService)
+    public RoomController(IRoomService roomService, IGameSessionService gameSessionService)
     {
         _roomService = roomService;
+        _gameSessionService = gameSessionService;
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<ActionResult<RoomResponseDTO>> CreateRoom([FromBody] CreateRoomRequestDTO CreateRoomRequestDTO)
+    {
+        var room = await _roomService.CreateRoomAsync(CreateRoomRequestDTO);
+        return CreatedAtAction(nameof(GetRoomById), new { id = room.Id }, room);
     }
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<PagedResult<RoomDTO>>> GetAllRooms([FromQuery] RoomQueryParams queryParams)
+    public async Task<ActionResult<PagedResult<RoomResponseDTO>>> GetAllRooms([FromQuery] RoomQueryParams queryParams)
     {
         var result = await _roomService.GetAllRoomsAsync(queryParams);
         return Ok(result);
@@ -28,29 +39,29 @@ public class RoomController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<ActionResult<RoomDetailDTO>> GetRoomById(Guid id)
+    public async Task<ActionResult<RoomWithPlayersResponseDTO>> GetRoomById(Guid id)
     {
         var room = await _roomService.GetRoomByIdAsync(id);            
         return Ok(room);
     }
 
-    [HttpPost]
+    [HttpPost("{id}/start")]
     [Authorize]
-    public async Task<ActionResult<RoomDTO>> CreateRoom([FromBody] CreateRoomDTO createRoomDto)
+    public async Task<IActionResult> StartGame(Guid id)
     {
-        var room = await _roomService.CreateRoomAsync(createRoomDto);
-        return CreatedAtAction(nameof(GetAllRooms), new { id = room.Id }, room);
+        await _gameSessionService.StartGameAsync(id);
+        return Ok(new { message = "Game started successfully" });
     }
 
-    [HttpPost("join")]
+    [HttpPost("{id}/join")]
     [Authorize]
-    public async Task<IActionResult> JoinRoom([FromBody] JoinRoomRequestDTO request)
+    public async Task<IActionResult> JoinRoom(Guid id)
     {
-        await _roomService.JoinRoomAsync(request.RoomId);
+        await _roomService.JoinRoomAsync(id);
         return Ok(new { message = "Joined room successfully" });
     }
 
-    [HttpDelete("leave/{id}")]
+    [HttpDelete("{id}/leave")]
     [Authorize]
     public async Task<IActionResult> LeaveRoom(Guid id)
     {

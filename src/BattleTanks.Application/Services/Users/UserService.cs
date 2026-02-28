@@ -1,10 +1,11 @@
-using BattleTanks.Application.DTOs.Users;
-using BattleTanks.Application.Interfaces;
 using BattleTanks.Domain.Entities.Users;
 using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
+
+using BattleTanks.Application.DTOs.Users;
+using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Exceptions;
-using BattleTanks.Application.Common.Interfaces;
+
 using MapsterMapper;
 
 namespace BattleTanks.Application.Services.Users;

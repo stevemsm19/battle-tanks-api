@@ -32,5 +32,10 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
             .WithOne(ru => ru.Room)
             .HasForeignKey(ru => ru.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(r => r.GameMap)
+            .WithMany()
+            .HasForeignKey(r => r.GameMapId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

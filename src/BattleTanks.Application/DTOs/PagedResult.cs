@@ -1,4 +1,4 @@
-namespace BattleTanks.Application.Common;
+namespace BattleTanks.Application.DTOs;
 
 public class PagedResult<T>
 {

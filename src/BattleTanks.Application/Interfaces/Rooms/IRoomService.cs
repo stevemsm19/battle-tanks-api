@@ -1,13 +1,13 @@
-using BattleTanks.Application.Common;
+using BattleTanks.Application.DTOs;
 using BattleTanks.Application.DTOs.Rooms;
 
 namespace BattleTanks.Application.Interfaces.Rooms;
 
 public interface IRoomService
 {
-    Task<PagedResult<RoomDTO>> GetAllRoomsAsync(RoomQueryParams queryParams);
-    Task<RoomDTO> CreateRoomAsync(CreateRoomDTO createRoomDto);
-    Task<RoomDetailDTO?> GetRoomByIdAsync(Guid roomId);
+    Task<RoomResponseDTO> CreateRoomAsync(CreateRoomRequestDTO CreateRoomRequestDTO);
+    Task<RoomWithPlayersResponseDTO?> GetRoomByIdAsync(Guid roomId);
+    Task<PagedResult<RoomResponseDTO>> GetAllRoomsAsync(RoomQueryParams queryParams);
     Task<bool> JoinRoomAsync(Guid roomId);
     Task LeaveRoomAsync(Guid roomId);
 }

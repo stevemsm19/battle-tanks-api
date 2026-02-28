@@ -5,7 +5,7 @@ namespace BattleTanks.Domain.Interfaces.Rooms;
 public interface IRoomRepository
 {
     Task<Room?> GetByIdAsync(Guid id);
-    Task<(IEnumerable<Room> Items, int TotalCount)> GetAllAsync(int page, int size);
+    Task<(IEnumerable<Room> Items, int TotalCount)> GetAllAsync(int page, int size, string? status = null);
     Task AddAsync(Room room);
     Task UpdateAsync(Room room);
     Task DeleteAsync(Room room);
