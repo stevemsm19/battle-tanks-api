@@ -31,7 +31,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(256);
         
         builder.Property(u => u.AvatarUrl)
-            .IsRequired()
             .HasMaxLength(2048);
         
         builder.HasMany(u => u.RoomUsers)

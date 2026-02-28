@@ -25,7 +25,7 @@ public class RoomUserConfiguration : IEntityTypeConfiguration<RoomUser>
             .OnDelete(DeleteBehavior.Cascade);
             
         builder.Property(ru => ru.IsReady)
-            .HasDefaultValue(false);
+            .HasDefaultValue(true);
             
         builder.Property(ru => ru.IsOwner)
             .HasDefaultValue(false);

@@ -22,6 +22,34 @@ namespace BattleTanks.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BattleTanks.Domain.Entities.Maps.GameMap", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Layout")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("game_maps", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567890"),
+                            Layout = "[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],[0,0,2,2,0,1,0,1,0,2,2,2,2,2,2,0,1,0,1,0,2,2,0,0],[0,0,2,2,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,2,2,0,0],[0,0,0,0,0,1,1,1,0,1,1,0,0,1,1,0,1,1,1,0,0,0,0,0],[0,1,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,0,0,0,2,2,0,0,0,1,0,1,1,0,1,0,0,0,2,2,0,0,0,0],[0,0,1,0,2,2,0,1,0,0,0,0,0,0,0,0,1,0,2,2,0,1,0,0],[0,0,1,0,0,0,0,1,1,1,0,2,2,0,1,1,1,0,0,0,0,1,0,0],[0,0,0,0,2,2,0,0,0,0,0,2,2,0,0,0,0,0,2,2,0,0,0,0],[0,1,1,0,2,2,0,1,1,1,0,0,0,0,1,1,1,0,2,2,0,1,1,0],[0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0],[0,0,2,2,0,1,1,1,0,0,0,0,0,0,0,0,1,1,1,0,2,2,0,0],[0,0,2,2,0,0,0,1,0,2,2,2,2,2,2,0,1,0,0,0,2,2,0,0],[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]",
+                            Name = "Default Map"
+                        });
+                });
+
             modelBuilder.Entity("BattleTanks.Domain.Entities.Rooms.Room", b =>
                 {
                     b.Property<Guid>("Id")
@@ -32,6 +60,9 @@ namespace BattleTanks.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
                         .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("GameMapId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("MaxPlayers")
                         .HasColumnType("integer");
@@ -46,6 +77,8 @@ namespace BattleTanks.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GameMapId");
 
                     b.HasIndex("Status");
 
@@ -68,7 +101,7 @@ namespace BattleTanks.Infrastructure.Migrations
                     b.Property<bool>("IsReady")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(true);
 
                     b.HasKey("RoomId", "UserId");
 
@@ -125,6 +158,17 @@ namespace BattleTanks.Infrastructure.Migrations
                     b.HasIndex("Score");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("BattleTanks.Domain.Entities.Rooms.Room", b =>
+                {
+                    b.HasOne("BattleTanks.Domain.Entities.Maps.GameMap", "GameMap")
+                        .WithMany()
+                        .HasForeignKey("GameMapId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GameMap");
                 });
 
             modelBuilder.Entity("BattleTanks.Domain.Entities.Rooms.RoomUser", b =>

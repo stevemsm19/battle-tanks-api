@@ -10,6 +10,7 @@ public class AuthMappingConfig : IRegister
     {
         config.NewConfig<RegisterRequestDTO, User>()
             .Map(dest => dest.Id, src => Guid.NewGuid())
+            .Map(dest => dest.AvatarUrl, src => string.Empty)
             .Map(dest => dest.CreatedAt, src => DateTime.UtcNow)
             .Map(dest => dest.UpdatedAt, src => DateTime.UtcNow);
     }

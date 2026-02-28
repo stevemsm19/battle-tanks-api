@@ -1,11 +1,12 @@
 namespace BattleTanks.Application.DTOs;
 
-public class PagedResult<T>
+public record PagedResult<T>(
+    IEnumerable<T> Items,
+    int TotalCount,
+    int Page,
+    int Size
+)
 {
-    public IEnumerable<T> Items { get; set; } = [];
-    public int TotalCount { get; set; }
-    public int Page { get; set; }
-    public int Size { get; set; }
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / Size);
     public bool HasPreviousPage => Page > 1;
     public bool HasNextPage => Page < TotalPages;

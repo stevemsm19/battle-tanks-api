@@ -57,13 +57,12 @@ public class RoomService : IRoomService
     {
         var (items, totalCount) = await _roomRepository.GetAllAsync(queryParams.Page, queryParams.Size, queryParams.Status);
         var roomDTOs = items.Select(r => _mapper.Map<RoomResponseDTO>(r));
-        return new PagedResult<RoomResponseDTO>
-        {
-            Items = roomDTOs,
-            TotalCount = totalCount,
-            Page = queryParams.Page,
-            Size = queryParams.Size
-        };
+        return new PagedResult<RoomResponseDTO>(
+            roomDTOs,
+            totalCount,
+            queryParams.Page,
+            queryParams.Size
+        );
     }
 
     public async Task<RoomWithPlayersResponseDTO?> GetRoomByIdAsync(Guid roomId)
@@ -94,7 +93,6 @@ public class RoomService : IRoomService
             RoomId = room.Id,
             UserId = user.Id,
             IsOwner = false,
-            IsReady = true
         });
         
         await _roomRepository.UpdateAsync(room);
