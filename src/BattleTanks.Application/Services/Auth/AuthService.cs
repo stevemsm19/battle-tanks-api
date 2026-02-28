@@ -5,6 +5,7 @@ using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Domain.Entities.Users;
 using BattleTanks.Domain.Exceptions;
+using MapsterMapper;
 
 namespace BattleTanks.Application.Services.Auth;
 
@@ -12,11 +13,13 @@ public class AuthService : IAuthService
 {
     private readonly IIdentityProvider _identityProvider;
     private readonly IUserRepository _userRepository;
+    private readonly IMapper _mapper;
 
-    public AuthService(IIdentityProvider identityProvider, IUserRepository userRepository)
+    public AuthService(IIdentityProvider identityProvider, IUserRepository userRepository, IMapper mapper)
     {
         _identityProvider = identityProvider;
         _userRepository = userRepository;
+        _mapper = mapper;
     }
 
     public async Task<RegisterResponseDTO> RegisterAsync(RegisterRequestDTO request)
@@ -49,15 +52,8 @@ public class AuthService : IAuthService
 
         try
         {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                FirebaseUid = uid,
-                Email = request.Email,
-                Nickname = request.Nickname,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            var user = _mapper.Map<User>(request);
+            user.FirebaseUid = uid;
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
@@ -68,11 +64,7 @@ public class AuthService : IAuthService
             throw;
         }
 
-        return new RegisterResponseDTO 
-        { 
-            Uid = uid, 
-            Message = "User registered successfully." 
-        };
+        return new RegisterResponseDTO(uid, "User registered successfully.");
     }
 }
 
