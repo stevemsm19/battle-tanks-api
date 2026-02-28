@@ -31,6 +31,7 @@ public class GlobalExceptionHandlerMiddleware
         {
             NotFoundException => (int)HttpStatusCode.NotFound,
             BadRequestException => (int)HttpStatusCode.BadRequest,
+            ForbiddenException => (int)HttpStatusCode.Forbidden,
             ExternalServiceException => (int)HttpStatusCode.BadGateway,
             AppException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError

@@ -2,26 +2,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BattleTanks.Application.DTOs.Users;
 
-public class UpdateUserRequestDTO
-{
-    [Required(ErrorMessage = "Nickname is required.")]
-    [StringLength(50, MinimumLength = 3, ErrorMessage = "Nickname must be between 3 and 50 characters.")]
-    public string Nickname { get; set; } = string.Empty;
+public record UpdateUserRequestDTO(
+    [Required, StringLength(50, MinimumLength = 3)] string Nickname,
+    [Required, EmailAddress] string Email,
+    string? AvatarUrl
+);
 
-    [Required(ErrorMessage = "Email is required.")]
-    [EmailAddress(ErrorMessage = "Invalid email format.")]
-    public string Email { get; set; } = string.Empty;
-
-    public string? AvatarUrl { get; set; }
-}
-
-public class UserResponseDTO
-{
-    public Guid Id { get; set; }
-    public string FirebaseUid { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Nickname { get; set; } = string.Empty;
-    public string AvatarUrl { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
+public record UserResponseDTO(
+    Guid Id,
+    string FirebaseUid,
+    string Email,
+    string Nickname,
+    string AvatarUrl,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);

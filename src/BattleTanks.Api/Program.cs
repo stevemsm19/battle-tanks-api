@@ -9,15 +9,20 @@ using BattleTanks.Infrastructure.Persistence;
 using BattleTanks.Infrastructure.Persistence.Repositories;
 using BattleTanks.Infrastructure.Persistence.Repositories.Users;
 using BattleTanks.Infrastructure.Persistence.Repositories.Rooms;
+using BattleTanks.Infrastructure.Persistence.Repositories.Maps;
+using BattleTanks.Application.Mapping;
+using Mapster;
 using BattleTanks.Domain.Interfaces.Rooms;
+using BattleTanks.Domain.Interfaces.Maps;
 using BattleTanks.Application.Interfaces.Rooms;
 using BattleTanks.Application.Services.Rooms;
+using BattleTanks.Application.Interfaces.Game;
+using BattleTanks.Application.Services.Game;
 using BattleTanks.Application.Common.Interfaces;
 using BattleTanks.Infrastructure.Services;
 using BattleTanks.Infrastructure.Services.SignalR;
 using BattleTanks.Infrastructure.Services.Redis;
 using BattleTanks.Infrastructure.Hubs;
-using BattleTanks.Application.Interfaces;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +61,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IGameMapRepository, GameMapRepository>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+
+MapsterConfig.RegisterMappings();
+builder.Services.AddMapster();
+
 builder.Services.AddFirebaseAuthentication(builder.Configuration);
 
 builder.Services.AddAuthorization();
@@ -69,6 +79,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(redisConnectionString));
 builder.Services.AddSingleton<IConnectedPlayerService, RedisConnectedPlayerService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddSingleton<IGameStateManager, GameStateManager>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

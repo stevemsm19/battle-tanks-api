@@ -5,6 +5,7 @@ using BattleTanks.Domain.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Application.Exceptions;
 using BattleTanks.Application.Common.Interfaces;
+using MapsterMapper;
 
 namespace BattleTanks.Application.Services.Users;
 
@@ -13,28 +14,20 @@ public class UserService : IUserService
     private readonly IIdentityProvider _identityProvider;
     private readonly IUserRepository _userRepository;
     private readonly IUserContext _userContext;
+    private readonly IMapper _mapper;
 
-    public UserService(IIdentityProvider identityProvider, IUserRepository userRepository, IUserContext userContext)
+    public UserService(IIdentityProvider identityProvider, IUserRepository userRepository, IUserContext userContext, IMapper mapper)
     {
         _identityProvider = identityProvider;
         _userRepository = userRepository;
         _userContext = userContext;
+        _mapper = mapper;
     }
 
-    public Task<UserResponseDTO> GetUserAsync()
+    public async Task<UserResponseDTO> GetUserAsync()
     {
         var user = _userContext.CurrentUser!;
-
-        return Task.FromResult(new UserResponseDTO
-        {
-            Id = user.Id,
-            FirebaseUid = user.FirebaseUid,
-            Email = user.Email,
-            Nickname = user.Nickname,
-            AvatarUrl = user.AvatarUrl,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        });
+        return _mapper.Map<UserResponseDTO>(user);
     }
 
     public async Task<UserResponseDTO> UpdateUserAsync(UpdateUserRequestDTO request)
@@ -43,36 +36,14 @@ public class UserService : IUserService
 
         await _identityProvider.UpdateUserAsync(user.FirebaseUid, request.Nickname, request.Email);
 
-        if (!string.IsNullOrWhiteSpace(request.Nickname))
-        {
-            user.Nickname = request.Nickname;
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Email))
-        {
-            user.Email = request.Email;
-        }
-
-        if (request.AvatarUrl != null)
-        {
-            user.AvatarUrl = request.AvatarUrl;
-        }
+        _mapper.Map(request, user);
 
         user.UpdatedAt = DateTime.UtcNow;
 
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();
 
-        return new UserResponseDTO
-        {
-            Id = user.Id,
-            FirebaseUid = user.FirebaseUid,
-            Email = user.Email,
-            Nickname = user.Nickname,
-            AvatarUrl = user.AvatarUrl,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
+        return _mapper.Map<UserResponseDTO>(user);
     }
 
     public async Task DeleteUserAsync()
