@@ -1,5 +1,5 @@
 using BattleTanks.Api.Helpers;
-using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Interfaces;
 using BattleTanks.Domain.Interfaces.Users;
 
 namespace BattleTanks.Api.Middlewares;

@@ -1,6 +1,6 @@
-using System.Net;
 using BattleTanks.Api.Helpers;
 using BattleTanks.Application.Exceptions;
+using System.Net;
 
 namespace BattleTanks.Api.Middlewares;
 
@@ -37,10 +37,7 @@ public class GlobalExceptionHandlerMiddleware
             _ => (int)HttpStatusCode.InternalServerError
         };
 
-        var detail = statusCode == (int)HttpStatusCode.InternalServerError
-            ? "An unexpected error occurred."
-            : exception.Message;
-
+        var detail = exception.Message;
         await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, statusCode, "An error occurred", detail);
     }
 }

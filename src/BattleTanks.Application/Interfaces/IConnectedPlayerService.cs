@@ -1,4 +1,4 @@
-namespace BattleTanks.Application.Common.Interfaces;
+namespace BattleTanks.Application.Interfaces;
 
 public interface IConnectedPlayerService
 {

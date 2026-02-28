@@ -1,5 +1,5 @@
 using BattleTanks.Infrastructure.Hubs;
-using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
 

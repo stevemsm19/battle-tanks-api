@@ -1,6 +1,6 @@
 using BattleTanks.Domain.Entities.Users;
 
-namespace BattleTanks.Application.Common.Interfaces;
+namespace BattleTanks.Application.Interfaces;
 
 public interface IUserContext
 {

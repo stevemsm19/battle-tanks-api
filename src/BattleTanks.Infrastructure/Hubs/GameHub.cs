@@ -1,4 +1,4 @@
-using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 

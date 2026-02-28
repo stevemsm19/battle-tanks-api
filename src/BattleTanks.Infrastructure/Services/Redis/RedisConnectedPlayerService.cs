@@ -1,4 +1,4 @@
-using BattleTanks.Application.Common.Interfaces;
+using BattleTanks.Application.Interfaces;
 using StackExchange.Redis;
 
 namespace BattleTanks.Infrastructure.Services.Redis;
