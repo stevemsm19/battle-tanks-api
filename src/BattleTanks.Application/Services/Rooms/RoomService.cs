@@ -37,7 +37,7 @@ public class RoomService : IRoomService
     {
         var user = _userContext.CurrentUser!;
 
-        await ValidateUserNotInAnotherRoomAsync(user.Id);
+        //await ValidateUserNotInAnotherRoomAsync(user.Id);
 
         var mapId = CreateRoomRequestDTO.GameMapId;
         var map = await _gameMapRepository.GetByIdAsync(mapId);
