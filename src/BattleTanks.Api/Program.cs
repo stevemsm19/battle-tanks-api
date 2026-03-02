@@ -74,6 +74,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddSingleton<IGameStateManager, GameStateManager>();
 builder.Services.AddSingleton<IConnectedPlayerService, RedisConnectedPlayerService>();
+builder.Services.AddHostedService<BattleTanks.Infrastructure.GameLoopService>();
 
 MapsterConfig.RegisterMappings();
 builder.Services.AddMapster();

@@ -8,5 +8,7 @@ public interface IGameStateManager
 {
     GameState InitializeGame(Guid roomId, GameMap map, IEnumerable<RoomUser> players);
     GameState? GetGameState(Guid roomId);
+    IEnumerable<GameState> GetAllActiveGames();
     void RemoveGame(Guid roomId);
+    void SetPlayerDirection(Guid roomId, string firebaseUid, string direction);
 }

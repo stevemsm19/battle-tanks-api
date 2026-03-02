@@ -1,4 +1,5 @@
 using BattleTanks.Application.Interfaces;
+using BattleTanks.Application.Interfaces.Game;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,10 +9,12 @@ namespace BattleTanks.Infrastructure.Hubs;
 public class GameHub : Hub
 {
     private readonly IConnectedPlayerService _connectedPlayerService;
+    private readonly IGameStateManager _gameStateManager;
 
-    public GameHub(IConnectedPlayerService connectedPlayerService)
+    public GameHub(IConnectedPlayerService connectedPlayerService, IGameStateManager gameStateManager)
     {
         _connectedPlayerService = connectedPlayerService;
+        _gameStateManager = gameStateManager;
     }
 
     public override async Task OnConnectedAsync()
@@ -55,5 +58,14 @@ public class GameHub : Hub
     public async Task SendMessage(string roomId, string user, string message)
     {
         await Clients.Group(roomId).SendAsync("ReceiveMessage", new { sender = user, text = message });
+    }
+
+    public Task ChangeDirection(string roomId, string direction)
+    {
+        var firebaseUid = Context.UserIdentifier ?? Context.ConnectionId;
+        if (Guid.TryParse(roomId, out var roomGuid))
+            _gameStateManager.SetPlayerDirection(roomGuid, firebaseUid, direction);
+
+        return Task.CompletedTask;
     }
 }

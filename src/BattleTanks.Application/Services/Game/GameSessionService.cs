@@ -43,7 +43,7 @@ public class GameSessionService : IGameSessionService
         if (room.RoomUsers.Count < 2)
             throw new BadRequestException("At least 2 players are required to start the game.");
 
-        //room.Status = RoomStatus.Closed;
+        room.Status = RoomStatus.Closed;
         await _roomRepository.UpdateAsync(room);
 
         if (room.GameMap == null) throw new AppException("Map data is missing.");

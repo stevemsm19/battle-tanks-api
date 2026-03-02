@@ -10,7 +10,7 @@ help:
 
 run: ## Run the application with hot reload
 	@echo "$(YELLOW)Starting application...$(NC)"
-	dotnet watch run --project $(API_PROJECT)
+	dotnet run --project $(API_PROJECT)
 
 migration: ## Create a new migration
 	@echo "$(YELLOW)Creating migration $(name)...$(NC)"

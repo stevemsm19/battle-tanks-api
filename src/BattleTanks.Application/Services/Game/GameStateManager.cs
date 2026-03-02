@@ -43,7 +43,7 @@ public class GameStateManager : IGameStateManager
                 Name = roomUser.User.Nickname,
                 X = startX,
                 Y = startY,
-                Direction = "UP",
+                Direction = "NONE",
                 Health = 100
             };
 
@@ -64,9 +64,20 @@ public class GameStateManager : IGameStateManager
         return foundGameState;
     }
 
+    public IEnumerable<GameState> GetAllActiveGames() => _activeGames.Values;
+
     public void RemoveGame(Guid roomId)
     {
-        _activeGames.TryRemove(roomId, out var removedGameState);
+        _activeGames.TryRemove(roomId, out _);
+    }
+
+    public void SetPlayerDirection(Guid roomId, string firebaseUid, string direction)
+    {
+        if (!_activeGames.TryGetValue(roomId, out var gameState)) return;
+
+        var player = gameState.Players.Values.FirstOrDefault(p => p.FirebaseUid == firebaseUid);
+        if (player != null)
+            player.Direction = direction;
     }
 
     private List<(int X, int Y)> GetValidCells(int[][] mapLayout)
