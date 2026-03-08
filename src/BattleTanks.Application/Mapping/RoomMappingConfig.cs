@@ -9,25 +9,7 @@ public class RoomMappingConfig : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<CreateRoomRequestDTO, Room>()
-            .Map(dest => dest.Id, src => Guid.NewGuid())
-            .Map(dest => dest.CreatedAt, src => DateTime.UtcNow)
-            .AfterMapping((src, dest) =>
-            {
-                if (MapContext.Current?.Parameters.TryGetValue("User", out var userObj) == true && userObj is User user)
-                {
-                    dest.RoomUsers = new List<RoomUser>
-                    {
-                        new RoomUser
-                        {
-                            RoomId = dest.Id,
-                            UserId = user.Id,
-                            IsOwner = true,
-                            IsReady = true
-                        }
-                    };
-                }
-            });
+        config.NewConfig<CreateRoomRequestDTO, Room>();
 
         config.NewConfig<Room, RoomResponseDTO>()
             .Map(dest => dest.CurrentPlayers, src => src.RoomUsers.Count)

@@ -21,13 +21,13 @@ public class Room
     public static Room Create(string name, int maxPlayers, GameMap map, User owner)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new DomainException("Room name cannot be empty.");
+            throw new InvalidRoomNameException();
             
         if (maxPlayers < 2 || maxPlayers > 4)
-            throw new DomainException("Room capacity must be between 2 and 4 players.");
+            throw new InvalidRoomCapacityException();
 
         if (map == null)
-            throw new DomainException("Invalid map.");
+            throw new InvalidGameMapException();
 
         var room = new Room
         {
@@ -60,7 +60,8 @@ public class Room
         {
             RoomId = this.Id,
             UserId = user.Id,
-            IsOwner = isOwner
+            IsOwner = isOwner,
+            IsReady = true
         });
     }
 

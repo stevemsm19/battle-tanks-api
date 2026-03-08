@@ -1,5 +1,6 @@
 using BattleTanks.Api.Helpers;
 using BattleTanks.Application.Interfaces;
+using BattleTanks.Application.Exceptions;
 using BattleTanks.Domain.Interfaces.Users;
 
 namespace BattleTanks.Api.Middlewares;
@@ -21,18 +22,14 @@ public class UserTokenValidationMiddleware
 
             if (string.IsNullOrEmpty(firebaseUid))
             {
-                await ErrorResponseHelper.WriteErrorResponseAsync(
-                    context.Response, 401, "Authentication error", "Invalid token: missing user identifier.");
-                return;
+                throw new BadRequestException("Invalid token: missing user identifier.");
             }
 
             var user = await userRepository.GetByFirebaseUidAsync(firebaseUid);
 
             if (user == null)
             {
-                await ErrorResponseHelper.WriteErrorResponseAsync(
-                    context.Response, 401, "Authentication error", "User without permissions.");
-                return;
+                throw new NotFoundException("User not found.");
             }
 
             userContext.CurrentUser = user;

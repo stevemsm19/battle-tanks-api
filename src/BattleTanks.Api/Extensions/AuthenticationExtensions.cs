@@ -6,9 +6,13 @@ namespace BattleTanks.Api.Extensions;
 
 public static class AuthenticationExtensions
 {
+    private const string SignalrHubPath = "/gameHub";
+    private const string AccessTokenQueryParam = "access_token";
+
     public static IServiceCollection AddFirebaseAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var projectId = configuration["Firebase:ProjectId"] ?? throw new InvalidOperationException("Firebase ProjectId is not configured");
+        var projectId = configuration["Firebase:ProjectId"] 
+            ?? throw new InvalidOperationException("Firebase ProjectId is not configured");
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -25,46 +29,45 @@ public static class AuthenticationExtensions
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = context =>
-                    {
-                        var accessToken = context.Request.Query["access_token"];
-                        var path = context.HttpContext.Request.Path;
-
-                        if (!string.IsNullOrEmpty(accessToken) &&
-                            path.StartsWithSegments("/gameHub"))
-                        {
-                            context.Token = accessToken;
-                        }
-
-                        return Task.CompletedTask;
-                    },
-                    OnChallenge = async context =>
-                    {
-                        context.HandleResponse();
-
-                        var detail = context.Error switch
-                        {
-                            "invalid_token" when context.ErrorDescription?.Contains("expired") == true
-                                => "The token has expired.",
-                            "invalid_token"
-                                => "The token is invalid.",
-                            _
-                                => "Authentication is required to access this resource."
-                        };
-
-                        await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, 401, "Authentication error", detail);
-                    },
-                    OnForbidden = async context =>
-                    {
-                        await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, 403, "Access denied", "You do not have permission to access this resource.");
-                    }
+                    OnMessageReceived = HandleSignalrToken,
+                    OnChallenge = context => HandleAuthChallenge(context),
+                    OnForbidden = context => 
+                        ErrorResponseHelper.WriteErrorResponseAsync(
+                            context.Response, 403, "Access denied", "No permission.")
                 };
             });
 
         services.AddAuthorization();
-
         return services;
     }
+
+    private static Task HandleSignalrToken(MessageReceivedContext context)
+    {
+        var accessToken = context.Request.Query[AccessTokenQueryParam];
+        var path = context.HttpContext.Request.Path;
+
+        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments(SignalrHubPath))
+        {
+            context.Token = accessToken;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static async Task HandleAuthChallenge(JwtBearerChallengeContext context)
+    {
+        context.HandleResponse();
+
+        var (title, detail) = context.Error switch
+        {
+            "invalid_token" when context.ErrorDescription?.Contains("expired") == true 
+                => ("Expired Token", "The session has expired."),
+            "invalid_token" 
+                => ("Invalid Token", "The security token is invalid."),
+            _ 
+                => ("Unauthorized", "Authentication is required.")
+        };
+
+        await ErrorResponseHelper.WriteErrorResponseAsync(context.Response, 401, title, detail);
+    }
 }
-
-
