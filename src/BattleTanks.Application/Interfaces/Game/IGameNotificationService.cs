@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace BattleTanks.Application.Interfaces;
+namespace BattleTanks.Application.Interfaces.Game;
 
 public interface IGameNotificationService
 {

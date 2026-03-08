@@ -26,11 +26,11 @@ public class AuthService : IAuthService
     {
         var nicknameExists = await _userRepository.ExistsByNicknameAsync(request.Nickname);
         if (nicknameExists)
-            throw new BadRequestException("Nickname is already taken.");
+            throw new NicknameAlreadyTakenException(request.Nickname);
         
         var emailExists = await _userRepository.ExistsByEmailAsync(request.Email);
         if (emailExists)
-            throw new BadRequestException("Email is already registered.");
+            throw new EmailAlreadyRegisteredException(request.Email);
 
         string uid;
 
@@ -45,15 +45,14 @@ public class AuthService : IAuthService
         catch (IdentityException ex)
         {
             if (ex.Code == "EmailAlreadyExists")
-                throw new BadRequestException("Email already registered.");
+                throw new EmailAlreadyRegisteredException(request.Email);
 
             throw new ExternalServiceException("Identity service failed.");
         }
 
         try
         {
-            var user = _mapper.Map<User>(request);
-            user.FirebaseUid = uid;
+            var user = User.Create(request.Email, request.Nickname, uid);
 
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();

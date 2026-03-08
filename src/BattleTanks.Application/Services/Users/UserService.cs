@@ -37,9 +37,7 @@ public class UserService : IUserService
 
         await _identityProvider.UpdateUserAsync(user.FirebaseUid, request.Nickname, request.Email);
 
-        _mapper.Map(request, user);
-
-        user.UpdatedAt = DateTime.UtcNow;
+        user.Update(request.Nickname, request.Email, request.AvatarUrl);
 
         _userRepository.Update(user);
         await _userRepository.SaveChangesAsync();

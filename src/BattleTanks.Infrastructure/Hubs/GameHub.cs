@@ -68,4 +68,13 @@ public class GameHub : Hub
 
         return Task.CompletedTask;
     }
+
+    public Task Shoot(string roomId)
+    {
+        var firebaseUid = Context.UserIdentifier ?? Context.ConnectionId;
+        if (Guid.TryParse(roomId, out var roomGuid))
+            _gameStateManager.SpawnBullet(roomGuid, firebaseUid);
+
+        return Task.CompletedTask;
+    }
 }

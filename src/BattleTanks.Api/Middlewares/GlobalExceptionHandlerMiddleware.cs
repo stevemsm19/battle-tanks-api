@@ -1,5 +1,6 @@
 using BattleTanks.Api.Helpers;
 using BattleTanks.Application.Exceptions;
+using BattleTanks.Domain.Exceptions;
 using System.Net;
 
 namespace BattleTanks.Api.Middlewares;
@@ -34,6 +35,7 @@ public class GlobalExceptionHandlerMiddleware
             ForbiddenException => (int)HttpStatusCode.Forbidden,
             ExternalServiceException => (int)HttpStatusCode.BadGateway,
             AppException => (int)HttpStatusCode.BadRequest,
+            DomainException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
 

@@ -1,6 +1,6 @@
 namespace BattleTanks.Domain.Exceptions;
 
-public class IdentityException : InfrastructureException
+public class IdentityException : Exception
 {
     public string Code { get; }
 

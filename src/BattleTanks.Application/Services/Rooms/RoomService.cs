@@ -11,6 +11,7 @@ using BattleTanks.Application.Interfaces.Rooms;
 using BattleTanks.Application.Interfaces.Game;
 using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Exceptions;
+using BattleTanks.Domain.Exceptions;
 
 using MapsterMapper;
 
@@ -41,11 +42,9 @@ public class RoomService : IRoomService
 
         var mapId = CreateRoomRequestDTO.GameMapId;
         var map = await _gameMapRepository.GetByIdAsync(mapId);
-        if (map == null) throw new BadRequestException("Invalid map ID");
+        if (map == null) throw new DomainException("Invalid map ID");
 
-        var room = _mapper.From(CreateRoomRequestDTO)
-                          .AddParameters("User", user)
-                          .AdaptToType<Room>();
+        var room = Room.Create(CreateRoomRequestDTO.Name, CreateRoomRequestDTO.MaxPlayers, map, user);
 
         await _roomRepository.AddAsync(room);
         var roomDto = _mapper.Map<RoomResponseDTO>(room);
@@ -80,20 +79,9 @@ public class RoomService : IRoomService
         if (room == null)
             throw new NotFoundException("Room not found");
 
-        if (room.Status != RoomStatus.Open)
-            throw new BadRequestException("Room is closed or cancelled");
+        await ValidateUserNotInAnotherRoomAsync(user.Id);
 
-        await ValidateUserNotInAnotherRoomAsync(user.Id, roomId);
-
-        if (room.RoomUsers.Count >= room.MaxPlayers)
-            throw new BadRequestException("Room is full");
-
-        room.RoomUsers.Add(new RoomUser
-        {
-            RoomId = room.Id,
-            UserId = user.Id,
-            IsOwner = false,
-        });
+        room.Join(user);
         
         await _roomRepository.UpdateAsync(room);
 
@@ -120,26 +108,15 @@ public class RoomService : IRoomService
         if (room == null)
             throw new NotFoundException("Room not found.");
 
-        var roomUser = room.RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id);
-        if (roomUser == null)
-            throw new BadRequestException("User does not belong to this room.");
+        var wasOwner = room.RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id)?.IsOwner ?? false;
 
-        var wasOwner = roomUser.IsOwner;
+        room.Leave(user);
 
-        room.RoomUsers.Remove(roomUser);
-
-        if (room.RoomUsers.Count == 0)
+        if (room.Status == RoomStatus.Cancelled)
         {
-            room.Status = RoomStatus.Cancelled;
             await _roomRepository.UpdateAsync(room);
             await _NotificationService.SendEventAsync("SearchRoom", "RoomStatusChanged", new { roomId = room.Id });
             return;
-        }
-
-        if (wasOwner)
-        {
-            var newOwner = room.RoomUsers.First();
-            newOwner.IsOwner = true;
         }
 
         await _roomRepository.UpdateAsync(room);
@@ -158,18 +135,13 @@ public class RoomService : IRoomService
         });
     }
 
-    private async Task ValidateUserNotInAnotherRoomAsync(Guid userId, Guid? joiningRoomId = null)
+    private async Task ValidateUserNotInAnotherRoomAsync(Guid userId)
     {
         var existingRoom = await _roomRepository.GetByUserIdAsync(userId);
         
         if (existingRoom != null)
         {
-            if (joiningRoomId.HasValue && existingRoom.Id == joiningRoomId.Value)
-            {
-                throw new BadRequestException("User is already in this room.");
-            }
-            
-            throw new BadRequestException($"User belongs to another room:{existingRoom.Id}");
+            throw new UserAlreadyInRoomException(existingRoom.Id);
         }
     }
 }
