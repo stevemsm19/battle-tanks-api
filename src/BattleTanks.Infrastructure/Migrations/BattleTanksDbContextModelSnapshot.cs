@@ -129,7 +129,7 @@ namespace BattleTanks.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("FirebaseUid")
+                    b.Property<string>("ExternalId")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
@@ -152,7 +152,7 @@ namespace BattleTanks.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("FirebaseUid")
+                    b.HasIndex("ExternalId")
                         .IsUnique();
 
                     b.HasIndex("Score");

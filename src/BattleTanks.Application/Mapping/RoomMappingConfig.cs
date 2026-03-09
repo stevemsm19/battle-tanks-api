@@ -22,7 +22,7 @@ public class RoomMappingConfig : IRegister
 
         config.NewConfig<RoomUser, RoomPlayerResponseDTO>()
             .Map(dest => dest.Id, src => src.User.Id.ToString())
-            .Map(dest => dest.FirebaseUid, src => src.User.FirebaseUid)
+            .Map(dest => dest.ExternalId, src => src.User.ExternalId)
             .Map(dest => dest.Name, src => src.User.Nickname);
     }
 }

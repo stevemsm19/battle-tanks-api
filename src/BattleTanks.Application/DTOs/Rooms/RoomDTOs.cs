@@ -21,7 +21,7 @@ public record RoomResponseDTO(
 
 public record RoomPlayerResponseDTO(
     string Id, 
-    string FirebaseUid, 
+    string ExternalId, 
     string Name, 
     bool IsOwner
 );

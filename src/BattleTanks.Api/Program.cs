@@ -17,6 +17,7 @@ using BattleTanks.Application.Services.Rooms;
 using BattleTanks.Application.Services.Game;
 using BattleTanks.Application.Services.Maps;
 
+using BattleTanks.Infrastructure;
 using BattleTanks.Infrastructure.Persistence;
 using BattleTanks.Infrastructure.Persistence.Repositories;
 using BattleTanks.Infrastructure.Persistence.Repositories.Users;
@@ -74,7 +75,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddSingleton<IGameStateManager, GameStateManager>();
 builder.Services.AddSingleton<IConnectedPlayerService, RedisConnectedPlayerService>();
-builder.Services.AddHostedService<BattleTanks.Infrastructure.GameLoopService>();
+builder.Services.AddHostedService<GameLoopService>();
 
 MapsterConfig.RegisterMappings();
 builder.Services.AddMapster();

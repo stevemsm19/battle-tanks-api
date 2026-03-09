@@ -4,5 +4,5 @@ namespace BattleTanks.Application.Interfaces.Maps;
 
 public interface IGameMapService
 {
-    Task<IEnumerable<GameMapDTO>> GetAllMapsAsync();
+    Task<IEnumerable<GameMapResponseDTO>> GetAllMapsAsync();
 }

@@ -6,7 +6,7 @@ namespace BattleTanks.Domain.Entities.Users;
 public class User
 {
     public Guid Id { get; set; }
-    public string FirebaseUid { get; set; } = string.Empty;
+    public string ExternalId { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
@@ -17,37 +17,37 @@ public class User
 
     public User() { }
 
-    private User(string email, string nickname, string firebaseUid)
+    private User(string email, string nickname, string externalId)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new DomainException("Email cannot be empty.");
+            throw new EmptyEmailException();
         
         if (string.IsNullOrWhiteSpace(nickname))
-            throw new DomainException("Nickname cannot be empty.");
+            throw new EmptyNicknameException();
 
-        if (string.IsNullOrWhiteSpace(firebaseUid))
-            throw new DomainException("FirebaseUid cannot be empty.");
+        if (string.IsNullOrWhiteSpace(externalId))
+            throw new EmptyExternalIdException();
 
         Id = Guid.NewGuid();
         Email = email;
         Nickname = nickname;
-        FirebaseUid = firebaseUid;
+        ExternalId = externalId;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public static User Create(string email, string nickname, string firebaseUid)
+    public static User Create(string email, string nickname, string externalId)
     {
-        return new User(email, nickname, firebaseUid);
+        return new User(email, nickname, externalId);
     }
 
     public void Update(string nickname, string email, string? avatarUrl = null)
     {
         if (string.IsNullOrWhiteSpace(nickname))
-            throw new DomainException("Nickname cannot be empty.");
+            throw new EmptyNicknameException();
 
         if (string.IsNullOrWhiteSpace(email))
-            throw new DomainException("Email cannot be empty.");
+            throw new EmptyEmailException();
 
         Nickname = nickname;
         Email = email;

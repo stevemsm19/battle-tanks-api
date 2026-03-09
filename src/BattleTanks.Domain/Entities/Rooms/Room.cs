@@ -45,43 +45,58 @@ public class Room
         return room;
     }
 
-    public void Join(User user, bool isOwner = false)
+    public bool Join(User user, bool isOwner = false)
     {
+        if (RoomUsers.Any(ru => ru.UserId == user.Id))
+        {
+            return false;
+        }
+
         if (Status != RoomStatus.Open)
             throw new RoomClosedException();
 
         if (RoomUsers.Count >= MaxPlayers)
             throw new RoomFullException();
 
-        if (RoomUsers.Any(ru => ru.UserId == user.Id))
-            throw new UserAlreadyInRoomException(this.Id);
+        var roomUser = RoomUser.Create(this.Id, user.Id, isOwner);
+        RoomUsers.Add(roomUser);
 
-        RoomUsers.Add(new RoomUser
-        {
-            RoomId = this.Id,
-            UserId = user.Id,
-            IsOwner = isOwner,
-            IsReady = true
-        });
+        return true;
     }
 
     public void Leave(User user)
     {
-        var roomUser = RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id);
-        if (roomUser == null)
-            throw new UserNotInRoomException();
+        var roomUser = RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id) 
+            ?? throw new UserNotInRoomException();
 
         var wasOwner = roomUser.IsOwner;
         RoomUsers.Remove(roomUser);
 
-        if (RoomUsers.Count == 0)
+        if (RoomUsers.Count > 0 && wasOwner)
+        {
+            RoomUsers.First().PromoteToOwner(); 
+        }
+        else if (RoomUsers.Count == 0)
         {
             Status = RoomStatus.Cancelled;
         }
-        else if (wasOwner)
-        {
-            var newOwner = RoomUsers.First();
-            newOwner.IsOwner = true;
-        }
+    }
+
+    public void Start(Guid currentUserId)
+    {
+        if (Status != RoomStatus.Open)
+            throw new RoomNotOpenException();
+
+        var owner = RoomUsers.FirstOrDefault(ru => ru.IsOwner);
+        if (owner == null || owner.UserId != currentUserId)
+            throw new NotRoomOwnerException();
+
+        if (RoomUsers.Count < 2)
+            throw new InsufficientPlayersException();
+
+        if (GameMap == null)
+            throw new MissingMapDataException();
+
+        Status = RoomStatus.Closed;
     }
 }

@@ -18,14 +18,14 @@ public class UserTokenValidationMiddleware
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var firebaseUid = context.User.FindFirst("user_id")?.Value;
+            var externalId = context.User.FindFirst("user_id")?.Value;
 
-            if (string.IsNullOrEmpty(firebaseUid))
+            if (string.IsNullOrEmpty(externalId))
             {
                 throw new BadRequestException("Invalid token: missing user identifier.");
             }
 
-            var user = await userRepository.GetByFirebaseUidAsync(firebaseUid);
+            var user = await userRepository.GetByExternalIdAsync(externalId);
 
             if (user == null)
             {

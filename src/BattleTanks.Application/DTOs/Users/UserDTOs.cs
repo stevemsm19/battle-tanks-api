@@ -10,7 +10,7 @@ public record UpdateUserRequestDTO(
 
 public record UserResponseDTO(
     Guid Id,
-    string FirebaseUid,
+    string ExternalId,
     string Email,
     string Nickname,
     string AvatarUrl,

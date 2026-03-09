@@ -13,13 +13,11 @@ public class AuthService : IAuthService
 {
     private readonly IIdentityProvider _identityProvider;
     private readonly IUserRepository _userRepository;
-    private readonly IMapper _mapper;
 
-    public AuthService(IIdentityProvider identityProvider, IUserRepository userRepository, IMapper mapper)
+    public AuthService(IIdentityProvider identityProvider, IUserRepository userRepository)
     {
         _identityProvider = identityProvider;
         _userRepository = userRepository;
-        _mapper = mapper;
     }
 
     public async Task<RegisterResponseDTO> RegisterAsync(RegisterRequestDTO request)

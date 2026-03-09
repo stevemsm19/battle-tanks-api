@@ -16,9 +16,9 @@ public class GameMapService : IGameMapService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<GameMapDTO>> GetAllMapsAsync()
+    public async Task<IEnumerable<GameMapResponseDTO>> GetAllMapsAsync()
     {
         var maps = await _mapRepository.GetAllAsync();
-        return _mapper.Map<IEnumerable<GameMapDTO>>(maps);
+        return _mapper.Map<IEnumerable<GameMapResponseDTO>>(maps);
     }
 }
