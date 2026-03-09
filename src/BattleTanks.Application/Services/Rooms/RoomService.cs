@@ -3,6 +3,7 @@ using BattleTanks.Domain.Interfaces.Users;
 using BattleTanks.Domain.Interfaces.Maps;
 using BattleTanks.Domain.Entities.Maps;
 using BattleTanks.Domain.Entities.Rooms;
+using BattleTanks.Domain.Entities.Users;
 using BattleTanks.Domain.Enums;
 
 using BattleTanks.Application.DTOs;
@@ -41,8 +42,8 @@ public class RoomService : IRoomService
         //await ValidateUserNotInAnotherRoomAsync(user.Id);
 
         var mapId = CreateRoomRequestDTO.GameMapId;
-        var map = await _gameMapRepository.GetByIdAsync(mapId);
-        if (map == null) throw new DomainException("Invalid map ID");
+        var map = await _gameMapRepository.GetByIdAsync(mapId) 
+            ?? throw new InvalidGameMapException();
 
         var room = Room.Create(CreateRoomRequestDTO.Name, CreateRoomRequestDTO.MaxPlayers, map, user);
 
@@ -66,82 +67,95 @@ public class RoomService : IRoomService
 
     public async Task<RoomWithPlayersResponseDTO?> GetRoomByIdAsync(Guid roomId)
     {
-        var room = await _roomRepository.GetByIdAsync(roomId);
-        if (room == null) throw new NotFoundException("Room not found");
+        var room = await _roomRepository.GetByIdAsync(roomId)
+            ?? throw new NotFoundException("Room not found");
         return _mapper.Map<RoomWithPlayersResponseDTO>(room);
     }
 
-    public async Task<bool> JoinRoomAsync(Guid roomId)
+    public async Task JoinRoomAsync(Guid roomId)
     {
         var user = _userContext.CurrentUser!;
 
-        var room = await _roomRepository.GetByIdAsync(roomId);
-        if (room == null)
-            throw new NotFoundException("Room not found");
+        var room = await _roomRepository.GetByIdAsync(roomId) 
+            ?? throw new NotFoundException($"Room with ID {roomId} not found");
 
-        await ValidateUserNotInAnotherRoomAsync(user.Id);
+        await ValidateUserNotInAnotherRoomAsync(user.Id, room.Id);
 
-        room.Join(user);
+        if (!room.Join(user)) return;
         
         await _roomRepository.UpdateAsync(room);
 
-        await _NotificationService.SendEventAsync(roomId.ToString(), "PlayerJoined", new
-        {
-            id = user.Id.ToString(),
-            name = user.Nickname
-        });
-
-        await _NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
-        {
-            roomId = room.Id.ToString(),
-            currentPlayers = room.RoomUsers.Count
-        });
-
-        return true;
+        await NotifyNewPlayerAsync(room, user);
     }
 
     public async Task LeaveRoomAsync(Guid roomId)
     {
         var user = _userContext.CurrentUser!;
-
-        var room = await _roomRepository.GetByIdAsync(roomId);
-        if (room == null)
-            throw new NotFoundException("Room not found.");
-
-        var wasOwner = room.RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id)?.IsOwner ?? false;
+        var room = await _roomRepository.GetByIdAsync(roomId)
+            ?? throw new NotFoundException("Room not found.");
 
         room.Leave(user);
 
-        if (room.Status == RoomStatus.Cancelled)
-        {
-            await _roomRepository.UpdateAsync(room);
-            await _NotificationService.SendEventAsync("SearchRoom", "RoomStatusChanged", new { roomId = room.Id });
-            return;
-        }
-
         await _roomRepository.UpdateAsync(room);
 
-        var newOwnerId = wasOwner ? room.RoomUsers.First().UserId : (Guid?)null;
-        await _NotificationService.SendEventAsync(room.Id.ToString(), "PlayerLeft", new
-        {
-            userId = user.Id.ToString(),
-            newOwnerId = newOwnerId?.ToString()
-        });
-
-        await _NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
-        {
-            roomId = room.Id.ToString(),
-            currentPlayers = room.RoomUsers.Count
-        });
+        await HandleLeaveNotificationsAsync(room, user);
     }
 
-    private async Task ValidateUserNotInAnotherRoomAsync(Guid userId)
+    private async Task ValidateUserNotInAnotherRoomAsync(Guid userId, Guid roomId)
     {
         var existingRoom = await _roomRepository.GetByUserIdAsync(userId);
         
-        if (existingRoom != null)
+        if (existingRoom != null && existingRoom.Id != roomId)
         {
             throw new UserAlreadyInRoomException(existingRoom.Id);
         }
     }
+
+    private async Task NotifyNewPlayerAsync(Room room, User user)
+    {
+        var roomIdStr = room.Id.ToString();
+
+        var playerJoinedTask = _NotificationService.SendEventAsync(roomIdStr, "PlayerJoined", new
+        {
+            id = user.Id.ToString(),
+            name = user.Nickname
+        });
+
+        var countChangedTask = _NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
+        {
+            roomId = roomIdStr,
+            currentPlayers = room.RoomUsers.Count
+        });
+
+        await Task.WhenAll(playerJoinedTask, countChangedTask);
+    }
+
+    private async Task HandleLeaveNotificationsAsync(Room room, User user)
+    {
+        var tasks = new List<Task>();
+
+        if (room.Status == RoomStatus.Cancelled)
+        {
+            tasks.Add(_NotificationService.SendEventAsync("SearchRoom", "RoomStatusChanged", new { roomId = room.Id }));
+        }
+        else
+        {
+            var newOwnerId = room.RoomUsers.FirstOrDefault(ru => ru.IsOwner)?.UserId;
+
+            tasks.Add(_NotificationService.SendEventAsync(room.Id.ToString(), "PlayerLeft", new
+            {
+                userId = user.Id.ToString(),
+                newOwnerId = newOwnerId?.ToString()
+            }));
+
+            tasks.Add(_NotificationService.SendEventAsync("SearchRoom", "RoomPlayerCountChanged", new
+            {
+                roomId = room.Id.ToString(),
+                currentPlayers = room.RoomUsers.Count
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+    }
 }
+

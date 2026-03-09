@@ -12,13 +12,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.HasKey(u => u.Id);
         
-        builder.HasIndex(u => u.FirebaseUid)
+        builder.HasIndex(u => u.ExternalId)
             .IsUnique();
         
         builder.HasIndex(u => u.Email)
             .IsUnique();
         
-        builder.Property(u => u.FirebaseUid)
+        builder.Property(u => u.ExternalId)
             .IsRequired()
             .HasMaxLength(128);
         

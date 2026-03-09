@@ -12,89 +12,63 @@ public class GameStateManager : IGameStateManager
 
     public GameState InitializeGame(Guid roomId, GameMap map, IEnumerable<RoomUser> players)
     {
-        var gameState = new GameState
-        {
-            RoomId = roomId,
-            MapLayout = map.Layout
-        };
-
+        var gameState = new GameState { RoomId = roomId, MapLayout = map.Layout };
         var random = new Random();
         var validCells = GetValidCells(map.Layout);
 
         foreach (var roomUser in players)
         {
-            float startX = 1f;
-            float startY = 1f;
+            var (startX, startY) = GetRandomSpawnPoint(validCells, random);
 
-            if (validCells.Count > 0)
-            {
-                var index = random.Next(validCells.Count);
-                var point = validCells[index];
-                validCells.RemoveAt(index);
-                
-                startX = point.X + 1;
-                startY = point.Y + 1;
-            }
+            var player = PlayerState.Create(
+                userId: roomUser.User.Id.ToString(),
+                externalId: roomUser.User.ExternalId,
+                name: roomUser.User.Nickname,
+                x: startX,
+                y: startY
+            );
 
-            var playerState = new PlayerState
-            {
-                UserId = roomUser.User.Id.ToString(),
-                FirebaseUid = roomUser.User.FirebaseUid,
-                Name = roomUser.User.Nickname,
-                X = startX,
-                Y = startY,
-                Direction = "NONE",
-                Health = 100
-            };
-
-            string playerId = playerState.UserId;
-            PlayerState initialPlayerState = playerState;
-
-            gameState.Players.TryAdd(playerId, initialPlayerState);
+            gameState.Players.TryAdd(player.ExternalId, player);
         }
 
-        _activeGames.AddOrUpdate(roomId, gameState, (existingId, oldState) => gameState);
-
+        _activeGames.TryAdd(roomId, gameState);
         return gameState;
     }
 
-    public GameState? GetGameState(Guid roomId)
+    public BulletState? SpawnBullet(Guid roomId, string externalId)
     {
-        _activeGames.TryGetValue(roomId, out var foundGameState);
-        return foundGameState;
+        return _activeGames.TryGetValue(roomId, out var gameState) 
+            ? gameState.CreateBullet(externalId) 
+            : null;
     }
 
-    public IEnumerable<GameState> GetAllActiveGames() => _activeGames.Values;
-
-    public void RemoveGame(Guid roomId)
+    public void SetPlayerDirection(Guid roomId, string externalId, string direction)
     {
-        _activeGames.TryRemove(roomId, out _);
-    }
-
-    public void SetPlayerDirection(Guid roomId, string firebaseUid, string direction)
-    {
-        if (!_activeGames.TryGetValue(roomId, out var gameState)) return;
-
-        var player = gameState.Players.Values.FirstOrDefault(p => p.FirebaseUid == firebaseUid);
-        if (player != null)
-            player.Direction = direction;
-    }
-
-    private List<(int X, int Y)> GetValidCells(int[][] mapLayout)
-    {
-        var validCells = new List<(int X, int Y)>();
-        
-        for (int y = 0; y < mapLayout.Length; y++)
+        if (_activeGames.TryGetValue(roomId, out var gameState))
         {
-            for (int x = 0; x < mapLayout[y].Length; x++)
-            {
-                if (mapLayout[y][x] == 0)
-                {
-                    validCells.Add((x, y));
-                }
-            }
+            gameState.GetPlayer(externalId)?.UpdateDirection(direction);
         }
-        
-        return validCells;
     }
+
+    private (float X, float Y) GetRandomSpawnPoint(List<(int X, int Y)> cells, Random rnd)
+    {
+        if (cells.Count == 0) return (1f, 1f);
+        var index = rnd.Next(cells.Count);
+        var p = cells[index];
+        cells.RemoveAt(index);
+        return (p.X + 1, p.Y + 1);
+    }
+
+    private List<(int X, int Y)> GetValidCells(int[][] layout)
+    {
+        return layout.SelectMany((row, y) => 
+            row.Select((cell, x) => (cell, x, y))
+               .Where(c => c.cell == 0)
+               .Select(c => (c.x, c.y))
+        ).ToList();
+    }
+
+    public GameState? GetGameState(Guid id) => _activeGames.GetValueOrDefault(id);
+    public IEnumerable<GameState> GetAllActiveGames() => _activeGames.Values;
+    public void RemoveGame(Guid id) => _activeGames.TryRemove(id, out _);
 }

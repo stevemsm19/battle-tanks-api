@@ -6,51 +6,52 @@ namespace BattleTanks.Infrastructure.Services.Redis;
 public class RedisConnectedPlayerService : IConnectedPlayerService
 {
     private readonly IDatabase _db;
+    private static readonly TimeSpan Ttl = TimeSpan.FromHours(2);
 
-    private static string PlayerKey(string connectionId) => $"connected:{connectionId}";
-    private static string RoomKey(string roomId) => $"room:{roomId}:players";
-    private static readonly TimeSpan Ttl = TimeSpan.FromHours(24);
+    private static string UserKey(string id) => $"user:session:{id}";
+    private static string ConnKey(string id) => $"conn:to:user:{id}";
+    private static string RoomKey(string id) => $"room:{id}:players";
 
-    public RedisConnectedPlayerService(IConnectionMultiplexer redis)
-    {
-        _db = redis.GetDatabase();
-    }
+    public RedisConnectedPlayerService(IConnectionMultiplexer redis) => _db = redis.GetDatabase();
 
     public async Task AddPlayerAsync(string connectionId, string userId)
     {
-        var key = PlayerKey(connectionId);
-        await _db.HashSetAsync(key, [new HashEntry("userId", userId)]);
-        await _db.KeyExpireAsync(key, Ttl);
+        await Task.WhenAll(
+            _db.StringSetAsync(ConnKey(connectionId), userId, Ttl),
+            _db.HashSetAsync(UserKey(userId), "lastConnectionId", connectionId)
+        );
+        await _db.KeyExpireAsync(UserKey(userId), Ttl);
     }
 
     public async Task SetPlayerRoomAsync(string connectionId, string roomId)
     {
-        var playerKey = PlayerKey(connectionId);
+        var userId = await _db.StringGetAsync(ConnKey(connectionId));
+        if (!userId.HasValue) return;
 
-        var previousRoom = await _db.HashGetAsync(playerKey, "roomId");
-        if (previousRoom.HasValue && previousRoom != roomId)
-            await _db.SetRemoveAsync(RoomKey(previousRoom!), connectionId);
-
-        await _db.HashSetAsync(playerKey, [new HashEntry("roomId", roomId)]);
-        await _db.KeyExpireAsync(playerKey, Ttl);
-
-        var roomKey = RoomKey(roomId);
-        await _db.SetAddAsync(roomKey, connectionId);
-        await _db.KeyExpireAsync(roomKey, Ttl);
+        await _db.HashSetAsync(UserKey(userId!), "roomId", roomId);
+        await _db.SetAddAsync(RoomKey(roomId), userId!);
     }
 
     public async Task RemovePlayerAsync(string connectionId)
     {
-        var playerKey = PlayerKey(connectionId);
-        var roomId = await _db.HashGetAsync(playerKey, "roomId");
-        if (roomId.HasValue)
-            await _db.SetRemoveAsync(RoomKey(roomId!), connectionId);
-        await _db.KeyDeleteAsync(playerKey);
+        await _db.KeyDeleteAsync(ConnKey(connectionId));
     }
 
-    public async Task<string?> GetPlayerRoomAsync(string connectionId)
+    public async Task<string?> GetPlayerRoomAsync(string userId)
     {
-        var roomId = await _db.HashGetAsync(PlayerKey(connectionId), "roomId");
-        return roomId.HasValue ? roomId.ToString() : null;
+        var roomId = await _db.HashGetAsync(UserKey(userId), "roomId");
+        return roomId;
+    }
+
+    public async Task ClearPlayerSessionAsync(string userId)
+    {
+        var roomId = await _db.HashGetAsync(UserKey(userId), "roomId");
+
+        if (roomId.HasValue)
+        {
+            await _db.SetRemoveAsync(RoomKey(roomId!), userId);
+        }
+
+        await _db.KeyDeleteAsync(UserKey(userId));
     }
 }

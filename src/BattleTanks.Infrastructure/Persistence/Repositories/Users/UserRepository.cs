@@ -14,9 +14,9 @@ public class UserRepository : IUserRepository
         _dbContext = dbContext;
     }
 
-    public async Task<User?> GetByFirebaseUidAsync(string firebaseUid)
+    public async Task<User?> GetByExternalIdAsync(string externalId)
     {
-        return await _dbContext.Users.FirstOrDefaultAsync(u => u.FirebaseUid == firebaseUid);
+        return await _dbContext.Users.FirstOrDefaultAsync(u => u.ExternalId == externalId);
     }
 
     public async Task<User?> GetByIdAsync(Guid id)

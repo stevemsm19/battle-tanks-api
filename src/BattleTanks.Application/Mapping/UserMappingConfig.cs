@@ -10,7 +10,7 @@ public class UserMappingConfig : IRegister
     {
         config.NewConfig<UpdateUserRequestDTO, User>()
             .Ignore(dest => dest.Id)
-            .Ignore(dest => dest.FirebaseUid)
+            .Ignore(dest => dest.ExternalId)
             .IgnoreNullValues(true);
     }
 }

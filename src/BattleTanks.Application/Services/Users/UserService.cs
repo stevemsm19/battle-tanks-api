@@ -35,7 +35,7 @@ public class UserService : IUserService
     {
         var user = _userContext.CurrentUser!;
 
-        await _identityProvider.UpdateUserAsync(user.FirebaseUid, request.Nickname, request.Email);
+        await _identityProvider.UpdateUserAsync(user.ExternalId, request.Nickname, request.Email);
 
         user.Update(request.Nickname, request.Email, request.AvatarUrl);
 
@@ -49,7 +49,7 @@ public class UserService : IUserService
     {
         var user = _userContext.CurrentUser!;
 
-        await _identityProvider.DeleteUserAsync(user.FirebaseUid);
+        await _identityProvider.DeleteUserAsync(user.ExternalId);
 
         _userRepository.Delete(user);
         await _userRepository.SaveChangesAsync();

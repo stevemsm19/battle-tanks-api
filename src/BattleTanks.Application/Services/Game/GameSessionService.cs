@@ -1,7 +1,7 @@
 using BattleTanks.Application.Interfaces;
 using BattleTanks.Application.Exceptions;
 using BattleTanks.Application.Interfaces.Game;
-using BattleTanks.Domain.Enums;
+using BattleTanks.Domain.Entities.Game;
 using BattleTanks.Domain.Interfaces.Rooms;
 
 namespace BattleTanks.Application.Services.Game;
@@ -11,52 +11,55 @@ public class GameSessionService : IGameSessionService
     private readonly IRoomRepository _roomRepository;
     private readonly IUserContext _userContext;
     private readonly IGameStateManager _gameStateManager;
-    private readonly INotificationService _NotificationService;
+    private readonly INotificationService _notificationService;
+
+    private const string GameStartedEvent = "GameStarted";
+    private const string RoomStatusChangedEvent = "RoomStatusChanged";
+    private const string SearchRoomGroup = "SearchRoom";
 
     public GameSessionService(
-        IRoomRepository roomRepository,
-        IUserContext userContext,
-        IGameStateManager gameStateManager,
-        INotificationService NotificationService)
+        IRoomRepository roomRepository, 
+        IUserContext userContext, 
+        IGameStateManager gameStateManager, 
+        INotificationService notificationService)
     {
         _roomRepository = roomRepository;
         _userContext = userContext;
         _gameStateManager = gameStateManager;
-        _NotificationService = NotificationService;
+        _notificationService = notificationService;
     }
 
     public async Task StartGameAsync(Guid roomId)
     {
-        var user = _userContext.CurrentUser!;
+        var currentUserId = _userContext.CurrentUser!.Id;
 
-        var room = await _roomRepository.GetByIdAsync(roomId);
-        if (room == null)
-            throw new NotFoundException("Room not found.");
+        var room = await _roomRepository.GetByIdAsync(roomId) 
+            ?? throw new NotFoundException("Room not found.");
 
-        if (room.Status != RoomStatus.Open)
-            throw new BadRequestException("Room is not open.");
+        room.Start(currentUserId);
 
-        var roomUser = room.RoomUsers.FirstOrDefault(ru => ru.UserId == user.Id);
-        if (roomUser == null || !roomUser.IsOwner)
-            throw new BadRequestException("Only the room owner can start the game.");
-
-        if (room.RoomUsers.Count < 2)
-            throw new BadRequestException("At least 2 players are required to start the game.");
-
-        room.Status = RoomStatus.Closed;
         await _roomRepository.UpdateAsync(room);
-
-        if (room.GameMap == null) throw new AppException("Map data is missing.");
 
         var gameState = _gameStateManager.InitializeGame(roomId, room.GameMap, room.RoomUsers);
 
-        await _NotificationService.SendEventAsync(roomId.ToString(), "GameStarted", new
+        await Task.WhenAll(
+            NotifyPlayers(roomId, gameState),
+            NotifyLobbyUpdate(room.Id)
+        );
+    }
+
+    private async Task NotifyPlayers(Guid roomId, GameState gameState)
+    {
+        await _notificationService.SendEventAsync(roomId.ToString(), GameStartedEvent, new
         {
-            roomId = room.Id.ToString(),
+            roomId = roomId.ToString(),
             map = gameState.MapLayout,
             players = gameState.Players.Values
         });
+    }
 
-        await _NotificationService.SendEventAsync("SearchRoom", "RoomStatusChanged", new { roomId = room.Id });
+    private async Task NotifyLobbyUpdate(Guid roomId)
+    {
+        await _notificationService.SendEventAsync(SearchRoomGroup, RoomStatusChangedEvent, new { roomId });
     }
 }

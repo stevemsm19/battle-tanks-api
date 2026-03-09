@@ -5,12 +5,25 @@ namespace BattleTanks.Domain.Entities.Rooms;
 
 public class RoomUser
 {
-    public Guid RoomId { get; set; }
-    public Room Room { get; set; } = null!;
+    public Guid RoomId { get; private set; }
+    public Room Room { get; private set; } = null!;
+    public Guid UserId { get; private set; }
+    public User User { get; private set; } = null!;
+    public bool IsReady { get; private set; }
+    public bool IsOwner { get; private set; }
 
-    public Guid UserId { get; set; }
-    public User User { get; set; } = null!;
+    protected RoomUser() { }
 
-    public bool IsReady { get; set; }
-    public bool IsOwner { get; set; }
+    public static RoomUser Create(Guid roomId, Guid userId, bool isOwner)
+    {
+        return new RoomUser
+        {
+            RoomId = roomId,
+            UserId = userId,
+            IsOwner = isOwner,
+            IsReady = true
+        };
+    }
+
+    public void PromoteToOwner() => IsOwner = true;
 }

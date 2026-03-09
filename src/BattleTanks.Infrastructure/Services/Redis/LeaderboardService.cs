@@ -9,9 +9,7 @@ public class LeaderboardService : ILeaderboardService
 {
     private readonly IDatabase _db;
     private readonly IUserRepository _userRepository;
-
     private const string ScoresKey = "leaderboard:scores";
-    private static readonly TimeSpan Ttl = TimeSpan.FromHours(24);
 
     public LeaderboardService(IConnectionMultiplexer redis, IUserRepository userRepository)
     {
@@ -21,31 +19,32 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task<IEnumerable<TopPlayerDTO>> GetTop10Async()
     {
-        var count = await _db.SortedSetLengthAsync(ScoresKey);
-        if (count == 0)
-            await SeedFromDatabaseAsync();
+        if (!await _db.KeyExistsAsync(ScoresKey))
+            await RefreshCacheAsync();
 
-        var entries = await _db.SortedSetRangeByRankWithScoresAsync(
-            ScoresKey, start: 0, stop: 9, order: Order.Descending);
+        var entries = await _db.SortedSetRangeByRankWithScoresAsync(ScoresKey, 0, 9, Order.Descending);
 
-        return entries.Select((e, i) => new TopPlayerDTO(
-            Rank: i + 1,
-            Nickname: e.Element!,
-            Score: (int)e.Score
-        ));
+        return entries.Select((e, i) => new TopPlayerDTO(i + 1, e.Element!, (int)e.Score));
     }
 
-    private async Task SeedFromDatabaseAsync()
+    public async Task UpdateScoreAsync(string nickname, int score)
+    {
+        await _db.SortedSetAddAsync(ScoresKey, nickname, score);
+        await _db.SortedSetRemoveRangeByRankAsync(ScoresKey, 0, -101);
+    }
+
+    private async Task RefreshCacheAsync()
     {
         var top100 = await _userRepository.GetTop100ByScoreAsync();
-
+        
         var entries = top100
             .Select(u => new SortedSetEntry(u.Nickname, u.Score))
             .ToArray();
 
-        if (entries.Length == 0) return;
-
-        await _db.SortedSetAddAsync(ScoresKey, entries);
-        await _db.KeyExpireAsync(ScoresKey, Ttl);
+        if (entries.Length > 0)
+        {
+            await _db.SortedSetAddAsync(ScoresKey, entries);
+            await _db.KeyExpireAsync(ScoresKey, TimeSpan.FromHours(24)); 
+        }
     }
 }

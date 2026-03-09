@@ -4,7 +4,7 @@ namespace BattleTanks.Domain.Interfaces.Users;
 
 public interface IUserRepository
 {
-    Task<User?> GetByFirebaseUidAsync(string firebaseUid);
+    Task<User?> GetByExternalIdAsync(string externalId);
     Task<User?> GetByIdAsync(Guid id);
     Task<bool> ExistsByNicknameAsync(string nickname);
     Task<bool> ExistsByEmailAsync(string email);

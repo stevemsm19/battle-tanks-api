@@ -10,6 +10,8 @@ public class GameHub : Hub
 {
     private readonly IConnectedPlayerService _connectedPlayerService;
     private readonly IGameStateManager _gameStateManager;
+    
+    private const string SearchRoomGroup = "SearchRoom";
 
     public GameHub(IConnectedPlayerService connectedPlayerService, IGameStateManager gameStateManager)
     {
@@ -17,43 +19,53 @@ public class GameHub : Hub
         _gameStateManager = gameStateManager;
     }
 
+    private string UserId => Context.UserIdentifier 
+        ?? throw new HubException("User not authenticated");
+
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.UserIdentifier ?? Context.ConnectionId;
-        await _connectedPlayerService.AddPlayerAsync(Context.ConnectionId, userId);
+        await _connectedPlayerService.AddPlayerAsync(Context.ConnectionId, UserId);
+
+        var roomId = await _connectedPlayerService.GetPlayerRoomAsync(UserId);
+        if (!string.IsNullOrEmpty(roomId))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+            await SyncStateToCaller(roomId);
+        }
+
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await _connectedPlayerService.RemovePlayerAsync(Context.ConnectionId);
+        
         await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task LeaveGame(string roomId)
+    {
+        if (TryParseRoomId(roomId, out var roomGuid))
+        {
+            var gameState = _gameStateManager.GetGameState(roomGuid);
+            gameState?.Players.TryRemove(UserId, out _);
+        }
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+        await _connectedPlayerService.ClearPlayerSessionAsync(UserId);
+        
+        await Clients.Group(roomId).SendAsync("PlayerLeft", UserId);
     }
 
     public async Task JoinGame(string roomId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
         await _connectedPlayerService.SetPlayerRoomAsync(Context.ConnectionId, roomId);
+        await SyncStateToCaller(roomId);
     }
 
-    public async Task LeaveGame(string roomId)
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-        await _connectedPlayerService.RemovePlayerAsync(Context.ConnectionId);
-
-        var userId = Context.UserIdentifier ?? Context.ConnectionId;
-        await _connectedPlayerService.AddPlayerAsync(Context.ConnectionId, userId);
-    }
-
-    public async Task JoinSearchRoomGroup()
-    {
-        await Groups.AddToGroupAsync(Context.ConnectionId, "SearchRoom");
-    }
-
-    public async Task LeaveSearchRoomGroup()
-    {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "SearchRoom");
-    }
+    public Task JoinSearchRoomGroup() => Groups.AddToGroupAsync(Context.ConnectionId, SearchRoomGroup);
+    public Task LeaveSearchRoomGroup() => Groups.RemoveFromGroupAsync(Context.ConnectionId, SearchRoomGroup);
 
     public async Task SendMessage(string roomId, string user, string message)
     {
@@ -62,19 +74,39 @@ public class GameHub : Hub
 
     public Task ChangeDirection(string roomId, string direction)
     {
-        var firebaseUid = Context.UserIdentifier ?? Context.ConnectionId;
-        if (Guid.TryParse(roomId, out var roomGuid))
-            _gameStateManager.SetPlayerDirection(roomGuid, firebaseUid, direction);
+        if (TryParseRoomId(roomId, out var roomGuid))
+            _gameStateManager.SetPlayerDirection(roomGuid, UserId, direction);
 
         return Task.CompletedTask;
     }
 
-    public Task Shoot(string roomId)
+    public async Task Shoot(string roomId)
     {
-        var firebaseUid = Context.UserIdentifier ?? Context.ConnectionId;
-        if (Guid.TryParse(roomId, out var roomGuid))
-            _gameStateManager.SpawnBullet(roomGuid, firebaseUid);
-
-        return Task.CompletedTask;
+        if (TryParseRoomId(roomId, out var roomGuid))
+        {
+            var bullet = _gameStateManager.SpawnBullet(roomGuid, UserId);
+            if (bullet != null)
+            {
+                await Clients.Group(roomId).SendAsync("BulletSpawned", new
+                {
+                    id = bullet.Id,
+                    x = bullet.X,
+                    y = bullet.Y,
+                    direction = bullet.Direction
+                });
+            }
+        }
     }
+
+    private async Task SyncStateToCaller(string roomId)
+    {
+        if (TryParseRoomId(roomId, out var roomGuid))
+        {
+            var gameState = _gameStateManager.GetGameState(roomGuid);
+            if (gameState != null)
+                await Clients.Caller.SendAsync("SyncGameState", gameState);
+        }
+    }
+
+    private bool TryParseRoomId(string roomId, out Guid guid) => Guid.TryParse(roomId, out guid);
 }

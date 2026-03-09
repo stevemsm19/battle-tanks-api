@@ -18,7 +18,7 @@ public class GameMapController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<GameMapDTO>>> GetAllMaps()
+    public async Task<ActionResult<IEnumerable<GameMapResponseDTO>>> GetAllMaps()
     {
         var maps = await _gameMapService.GetAllMapsAsync();
         return Ok(maps);

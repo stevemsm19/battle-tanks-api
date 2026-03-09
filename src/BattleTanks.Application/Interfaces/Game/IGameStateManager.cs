@@ -10,5 +10,6 @@ public interface IGameStateManager
     GameState? GetGameState(Guid roomId);
     IEnumerable<GameState> GetAllActiveGames();
     void RemoveGame(Guid roomId);
-    void SetPlayerDirection(Guid roomId, string firebaseUid, string direction);
+    void SetPlayerDirection(Guid roomId, string externalId, string direction);
+    BulletState? SpawnBullet(Guid roomId, string externalId);
 }

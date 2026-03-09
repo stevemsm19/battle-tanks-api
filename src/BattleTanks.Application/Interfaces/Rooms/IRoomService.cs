@@ -8,6 +8,6 @@ public interface IRoomService
     Task<RoomResponseDTO> CreateRoomAsync(CreateRoomRequestDTO CreateRoomRequestDTO);
     Task<RoomWithPlayersResponseDTO?> GetRoomByIdAsync(Guid roomId);
     Task<PagedResult<RoomResponseDTO>> GetAllRoomsAsync(RoomQueryParams queryParams);
-    Task<bool> JoinRoomAsync(Guid roomId);
+    Task JoinRoomAsync(Guid roomId);
     Task LeaveRoomAsync(Guid roomId);
 }
